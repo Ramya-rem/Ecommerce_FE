@@ -1,5 +1,5 @@
 body{
-    background: linear-gradient(to bottom, lightpink, lavender);
+    background: linear-gradient(to bottom, #f8e3cc, #f1decb);
     margin: 0;
     padding: 0;
     display: flex;
@@ -15,7 +15,7 @@ body{
     border: 1px solid #ddd;
     border-radius: 5px;
     text-align: center;
-    background: #f9f9f9;
+    background: #fff7ef;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   }
   
@@ -34,7 +34,8 @@ body{
   .signup-container button {
     width: 100%;
     padding: 10px;
-    background: linear-gradient(to right, lightpink, lavender);
+    /* background: linear-gradient(to right, #7f6054, #f0deca); */
+    background-color: rgb(250, 139, 155);
     color: white;
     border: none;
     cursor: pointer;
