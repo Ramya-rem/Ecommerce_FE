@@ -8,15 +8,16 @@ import ResetPassword from './pages/forgotpassword/ResetPassword'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
 
 function App() {
-
+console.log("App rendered");
   return (
     <Router>
     <Routes>
-    <Route path="/home" element={<Homepage />} />
-      <Route path="/" element={<Signup />} />
+    <Route path="/" element={<Homepage />} />
+      <Route path="/signup" element={<Signup />} />
       <Route path='/login' element={<Login />} />
       <Route path='/forgotpassword' element={<ForgotPassword />} />
       <Route path='/resetPassword/:token' element={<ResetPassword />} />
+
 
     </Routes>
   </Router>  

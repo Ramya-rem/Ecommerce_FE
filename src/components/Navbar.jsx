@@ -1,38 +1,25 @@
-import { Link } from 'react-router-dom';
-import { Home, ShoppingCart, Heart, Package, LogOut } from 'lucide-react';
-import logo from '../assets/crave&conquer.logo.png'; // adjust the path based on your folder structure
+import React from 'react'
 
 const Navbar = () => {
+  console.log("nav is rendered")
   return (
-    <nav className="bg-white shadow-md px-6 py-4 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        {/* Logo */}
-        <div className="flex items-center gap-2">
-          <img src={logo} alt="Cakebites Logo" className="w-10 h-10 object-contain" />
-          <span className="text-xl font-bold text-gray-800"></span>
+      <nav className="bg-white py-4 px-6 shadow-md">
+        <div className="flex space-x-16 justify-center">
+          <a href="#" className="text-lg font-medium text-gray-800 hover:text-primary">
+            Cakes
+          </a>
+          <a href="#" className="text-lg font-medium text-gray-800 hover:text-primary">
+            Donuts
+          </a>
+          <a href="#" className="text-lg font-medium text-gray-800 hover:text-primary">
+            Desserts
+          </a>
+          <a href="#" className="text-lg font-medium text-gray-800 hover:text-primary">
+            Drinks
+          </a>
         </div>
+      </nav>
+  )
+}
 
-        {/* Nav links */}
-        <div className="flex items-center gap-6 text-gray-700 text-sm font-medium">
-          <Link to="/home" className="flex items-center gap-1 hover:text-pink-600">
-            <Home size={18} /> Home
-          </Link>
-          <Link to="/shop" className="flex items-center gap-1 hover:text-pink-600">
-            <ShoppingCart size={18} /> Shop
-          </Link>
-          <Link to="/wishlist" className="flex items-center gap-1 hover:text-pink-600">
-            <Heart size={18} /> Wishlist
-          </Link>
-          <Link to="/orders" className="flex items-center gap-1 hover:text-pink-600">
-            <Package size={18} /> Orders
-          </Link>
-          <button className="flex items-center gap-1 px-3 py-1 bg-pink-500 hover:bg-pink-600 text-white rounded-md">
-            <LogOut size={16} /> Logout
-          </button>
-        </div>
-      </div>
-    </nav>
-  );
-};
-
-export default Navbar;
+export default Navbar
