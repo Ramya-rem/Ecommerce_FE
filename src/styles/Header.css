@@ -1,9 +1,12 @@
 .header {
     background-color: #f8e3cc;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    position: sticky;
+    position: relative;
     top: 0;
-    z-index: 100;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    width: 100%;
   }
   
   .header-container {
@@ -21,7 +24,7 @@
   }
   
   .logo {
-    height: 40px;
+    height: 60px;
     width: auto;
   }
   
@@ -30,11 +33,15 @@
     list-style: none;
     gap: 1.5rem;
     align-items: center;
+    margin: 0;
+    padding: 0;
   }
   
   .nav-menu a {
     font-weight: 500;
     transition: color 0.3s;
+    text-decoration: none;
+    color: #333;
   }
   
   .nav-menu a:hover {
@@ -51,6 +58,8 @@
     position: relative;
     font-size: 1.25rem;
     cursor: pointer;
+    color: #333;
+    text-decoration: none;
   }
   
   .cart-count {
@@ -76,6 +85,7 @@
     border: none;
     font-size: 1.5rem;
     color: #333;
+    cursor: pointer;
   }
   
   .icon-link {

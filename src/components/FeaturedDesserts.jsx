@@ -1,32 +1,34 @@
+"use client"
 import { FaHeart, FaShoppingCart } from "react-icons/fa"
 import "../styles/FeaturedDesserts.css"
 
-const FeaturedDesserts = () => {
-    const products = [
-        {
-          id: 1,
-          name: "🍓 Strawberry Cake",
-          description: "Fresh strawberries with cream cheese frosting",
-          price: 24.99,
-          image: "https://placehold.co/600x400",
-          badge: "Popular",
-        },
-        {
-          id: 2,
-          name: "🍫 Choco Lava",
-          description: "Warm chocolate cake with molten center",
-          price: 19.99,
-          image: "https://placehold.co/600x400",
-        },
-        {
-          id: 3,
-          name: "🥥 Coconut Cake",
-          description: "Light coconut cake with coconut flakes",
-          price: 22.99,
-          image: "https://placehold.co/600x400",
-          badge: "New",
-        },
-      ]
+function FeaturedDesserts({ addToCart }) {
+  const products = [
+    {
+      id: 1,
+      name: "🍓 Strawberry Cake",
+      description: "Fresh strawberries with cream cheese frosting",
+      price: 24.99,
+      image: "https://placehold.co/600x400",
+      badge: "Popular",
+    },
+    {
+      id: 2,
+      name: "🍫 Choco Lava",
+      description: "Warm chocolate cake with molten center",
+      price: 19.99,
+      image: "https://placehold.co/600x400",
+    },
+    {
+      id: 3,
+      name: "🥥 Coconut Cake",
+      description: "Light coconut cake with coconut flakes",
+      price: 22.99,
+      image: "https://placehold.co/600x400",
+      badge: "New",
+    },
+  ]
+
   return (
     <section className="featured-desserts">
       <div className="featured-container">

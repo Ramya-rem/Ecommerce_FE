@@ -1,12 +1,15 @@
+"use client"
+
 import { useState } from "react"
-import Header from '../../components/Header'
-import HeroSection from '../../components/HeroSection'
-import Categories from '../../components/Categories'
-import FeaturedDesserts from '../../components/FeaturedDesserts'
-import Offer from '../../components/Offer'
-import CustomerReview from '../../components/CustomerReview'
-import Footer from '../../components/Footer'
+import Header from "../../components/Header"
+import HeroSection from "../../components/HeroSection"
+import Categories from "../../components/Categories"
+import FeaturedDesserts from "../../components/FeaturedDesserts"
+import Offer from "../../components/Offer"
+import CustomerReview from "../../components/CustomerReview"
+import Footer from "../../components/Footer"
 import "./home.css"
+
 const HomePage = () => {
   const [cartItems, setCartItems] = useState([])
 
@@ -18,13 +21,15 @@ const HomePage = () => {
   return (
     <div className="app">
       <Header cartItemCount={cartItems.length} />
-      <main>
+      <div className="content-wrapper">
         <HeroSection />
         <Categories />
-        <FeaturedDesserts addToCart={addToCart} />
-        <Offer />
-        <CustomerReview />
-      </main>
+        <div className="lower-sections">
+          <FeaturedDesserts addToCart={addToCart} />
+          <Offer />
+          <CustomerReview />
+        </div>
+      </div>
       <Footer />
     </div>
   )

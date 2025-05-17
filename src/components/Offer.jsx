@@ -1,6 +1,6 @@
 import "../styles/Offer.css"
 
-const Offer = () => {
+function Offer() {
   return (
     <section className="special-offers">
       <div className="offers-container">
@@ -12,4 +12,4 @@ const Offer = () => {
   )
 }
 
-export default Offer;
+export default Offer
