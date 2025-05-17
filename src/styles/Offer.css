@@ -1,0 +1,39 @@
+.special-offers {
+    background-color: #f8e3cc;
+    padding: 2rem 0;
+    text-align: center;
+  }
+  
+  .offers-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+  
+  .special-offers h2 {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .special-offers p {
+    font-size: 1.25rem;
+    font-weight: 500;
+    margin-bottom: 1rem;
+  }
+  
+  .claim-offer-btn {
+    background-color: #efdbc7;
+    color: #333;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+    margin-top: 0.5rem;
+  }
+  
+  .claim-offer-btn:hover {
+    background-color: #e0c9b0;
+  }
+  
