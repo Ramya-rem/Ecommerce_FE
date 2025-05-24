@@ -1,11 +1,11 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
-import { FaUser, FaShoppingCart, FaBars, FaTimes } from "react-icons/fa"
-import logo from "../assets/crave&conquer.logo.png"
+import { FaUser, FaBars, FaTimes } from "react-icons/fa"
 import "../styles/Header.css"
+import logo from "../assets/crave&conquer.logo.png"
 
-function Header({ cartItemCount }) {
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+function Header({ cartItemCount, wishlistItemCount }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen)
@@ -31,7 +31,10 @@ function Header({ cartItemCount }) {
               <Link to="/shop">Shop</Link>
             </li>
             <li>
-              <Link to="/wishlist">Wishlist</Link>
+              <Link to="/wishlist" className="wishlist-link">
+                Wishlist
+                {wishlistItemCount > 0 && <span className="wishlist-count">{wishlistItemCount}</span>}
+              </Link>
             </li>
             <li>
               <Link to="/cart" className="cart-link">

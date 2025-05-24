@@ -2,7 +2,7 @@
 import { FaHeart, FaShoppingCart } from "react-icons/fa"
 import "../styles/FeaturedDesserts.css"
 
-function FeaturedDesserts({ addToCart }) {
+function FeaturedDesserts({ addToCart, addToWishlist, wishlistItems }) {
   const products = [
     {
       id: 1,
@@ -29,6 +29,10 @@ function FeaturedDesserts({ addToCart }) {
     },
   ]
 
+  const isInWishlist = (productId) => {
+    return wishlistItems.some((item) => item.id === productId)
+  }
+
   return (
     <section className="featured-desserts">
       <div className="featured-container">
@@ -43,7 +47,10 @@ function FeaturedDesserts({ addToCart }) {
               <div className="product-details">
                 <div className="product-header">
                   <h3>{product.name}</h3>
-                  <button className="wishlist-button">
+                  <button
+                    className={`wishlist-button ${isInWishlist(product.id) ? "active" : ""}`}
+                    onClick={() => addToWishlist(product)}
+                  >
                     <FaHeart />
                   </button>
                 </div>

@@ -78,6 +78,27 @@
   margin-left: 0.25rem;
 }
 
+.wishlist-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.wishlist-count {
+  background-color: #efdbc7;
+  color: #333;
+  font-size: 0.75rem;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin-left: 0.25rem;
+}
+
 .mobile-menu-button,
 .close-menu {
   display: none;
