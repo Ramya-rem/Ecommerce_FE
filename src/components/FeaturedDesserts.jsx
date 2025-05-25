@@ -27,6 +27,14 @@ function FeaturedDesserts({ addToCart, addToWishlist, wishlistItems }) {
       image: "https://placehold.co/600x400",
       badge: "New",
     },
+    {
+      id: 4,
+      name: "Matilda Cake",
+      description: "Light coconut cake with coconut flakes",
+      price: 49.99,
+      image: "https://placehold.co/600x400",
+      badge: "New",
+    },
   ]
 
   const isInWishlist = (productId) => {
