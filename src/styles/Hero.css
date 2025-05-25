@@ -1,7 +1,7 @@
 .hero {
     position: relative;
     height: 400px;
-    background-image: ('');
+    background-image: url('../assets/herosection.image2.png');
     background-size: cover;
     background-position: center;
     color: white;
