@@ -26,7 +26,7 @@
 }
 
 .logo {
-  height: 55px;
+  height: 40px;
   width: auto;
 }
 
@@ -78,6 +78,7 @@
   margin-left: 0.25rem;
 }
 
+/* Wishlist link with count - exactly matching cart count style */
 .wishlist-link {
   position: relative;
   display: flex;

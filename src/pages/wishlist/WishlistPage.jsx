@@ -41,18 +41,12 @@ const WishlistPage = () => {
   const removeFromWishlist = (productId) => {
     const productToRemove = wishlistItems.find((item) => item.id === productId)
     setWishlistItems(wishlistItems.filter((item) => item.id !== productId))
-    alert(`${productToRemove.name} removed from wishlist!`)
+    alert(`${productToRemove.name} removed from wishlist!`);
   }
 
   const addToCart = (product) => {
     setCartItems([...cartItems, product])
     alert(`${product.name} added to cart!`)
-  }
-
-  const addToCartAndRemoveFromWishlist = (product) => {
-    setCartItems([...cartItems, product])
-    setWishlistItems(wishlistItems.filter((item) => item.id !== product.id))
-    alert(`${product.name} moved to cart!`)
   }
 
   const clearAllWishlist = () => {
@@ -67,8 +61,7 @@ const WishlistPage = () => {
 
     setCartItems([...cartItems, ...wishlistItems])
     const itemCount = wishlistItems.length
-    setWishlistItems([])
-    alert(`${itemCount} items moved to cart!`)
+    alert(`${itemCount} items added to cart!`);
   }
 
   return (
@@ -137,9 +130,6 @@ const WishlistPage = () => {
                     <button className="add-to-cart-btn" onClick={() => addToCart(item)}>
                       <FaShoppingCart />
                       Add to Cart
-                    </button>
-                    <button className="move-to-cart-btn" onClick={() => addToCartAndRemoveFromWishlist(item)}>
-                      Move to Cart
                     </button>
                   </div>
                 </div>
