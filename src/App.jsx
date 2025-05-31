@@ -6,6 +6,7 @@ import ForgotPassword from './pages/forgotpassword/ForgotPassword'
 import ResetPassword from './pages/forgotpassword/ResetPassword'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
 import WishlistPage from './pages/wishlist/WishlistPage'
+import CartPage from './pages/cart/CartPage'
 
 function App() {
   return (
@@ -18,6 +19,8 @@ function App() {
           <Route path="/forgotpassword" element={<ForgotPassword />} />
           <Route path="/resetPassword/:token" element={<ResetPassword />} />
           <Route path="/wishlist" element={<WishlistPage />} />
+          <Route path="/cart" element={<CartPage />} />
+
 
         </Routes>
       </div>
