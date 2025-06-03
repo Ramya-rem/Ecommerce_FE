@@ -138,10 +138,11 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   display: flex;
   gap: 1rem;
-  transition: box-shadow 0.3s;
+  transition: transform 0.3s, box-shadow 0.3s;
 }
 
 .cart-item:hover {
+  transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
@@ -161,14 +162,38 @@
 
 .item-badge {
   position: absolute;
-  top: 0.5rem;
-  left: 0.5rem;
+  top: 0.75rem;
+  left: 0.75rem;
   background-color: #efdbc7;
   color: #333;
-  padding: 0.25rem 0.5rem;
-  border-radius: 12px;
-  font-size: 0.7rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
   font-weight: 600;
+}
+
+.remove-btn {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background-color: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ff6b6b;
+  cursor: pointer;
+  transition: all 0.3s;
+  backdrop-filter: blur(4px);
+}
+
+.remove-btn:hover {
+  background-color: #ff6b6b;
+  color: white;
+  transform: scale(1.1);
 }
 
 .item-details {
@@ -205,6 +230,7 @@
 .item-controls {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 1rem;
   flex-wrap: wrap;
 }
@@ -250,30 +276,10 @@
 }
 
 .item-total {
-  font-size: 1.125rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: #333;
   min-width: 80px;
-}
-
-.remove-btn {
-  background-color: rgba(255, 107, 107, 0.1);
-  border: none;
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ff6b6b;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.remove-btn:hover {
-  background-color: #ff6b6b;
-  color: white;
-  transform: scale(1.1);
 }
 
 /* Cart Summary */
@@ -425,5 +431,55 @@
 
   .quantity-controls {
     justify-content: center;
+  }
+}
+
+.delete-btn {
+  margin-top: 1rem;
+  background: none;
+  border: none;
+  color: #ff6b6b;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  transition: color 0.3s;
+  align-self: flex-start;
+}
+
+.delete-btn:hover {
+  color: #e55555;
+}
+
+.delete-item-btn {
+  background-color: #fff;
+  border: 1px solid #ff6b6b;
+  border-radius: 4px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ff6b6b;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 0.875rem;
+}
+
+.delete-item-btn:hover {
+  background-color: #ff6b6b;
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .item-controls {
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .delete-item-btn {
+    order: 3;
+    width: 100%;
+    max-width: 120px;
   }
 }

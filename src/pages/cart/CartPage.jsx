@@ -125,6 +125,9 @@ const CartPage = () => {
                   <div className="item-image-container">
                     <img src={item.image || "/placeholder.svg"} alt={item.name} className="item-image" />
                     {item.badge && <span className="item-badge">{item.badge}</span>}
+                    <button className="remove-btn" onClick={() => removeFromCart(item.id)} title="Remove from cart">
+                      <FaTrash />
+                    </button>
                   </div>
 
                   <div className="item-details">
@@ -150,10 +153,6 @@ const CartPage = () => {
                       </div>
 
                       <div className="item-total">${(item.price * item.quantity).toFixed(2)}</div>
-
-                      <button className="remove-btn" onClick={() => removeFromCart(item.id)} title="Remove from cart">
-                        <FaTrash />
-                      </button>
                     </div>
                   </div>
                 </div>
