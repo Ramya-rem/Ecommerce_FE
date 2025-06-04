@@ -7,21 +7,31 @@ import ResetPassword from './pages/forgotpassword/ResetPassword'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
 import WishlistPage from './pages/wishlist/WishlistPage'
 import CartPage from './pages/cart/CartPage'
+import CheckoutPage from './pages/checkout/CheckoutPage'
+import OrderConfirmationPage from './pages/checkout/OrderConfirmationPage'
+import { useEffect, useState } from 'react'
 
 function App() {
+   const [forceRender, setForceRender] = useState(false)
+
+  useEffect(() => {
+    // Force a re-render after component mounts
+    setForceRender(true)
+  }, [])
+
   return (
-    <Router>
-      <div className="app-container">
+     <Router>
+      <div className={`app-container ${forceRender ? "rendered" : ""}`}>
         <Routes>
           <Route path="/home" element={<Homepage />} />
+          <Route path="/wishlist" element={<WishlistPage />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/order-success" element={<OrderConfirmationPage />} />
           <Route path="/" element={<Signup />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgotpassword" element={<ForgotPassword />} />
           <Route path="/resetPassword/:token" element={<ResetPassword />} />
-          <Route path="/wishlist" element={<WishlistPage />} />
-          <Route path="/cart" element={<CartPage />} />
-
-
         </Routes>
       </div>
     </Router>

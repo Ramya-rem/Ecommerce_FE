@@ -1,11 +1,15 @@
+"use client"
+
 import { useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { FaArrowLeft, FaPlus, FaMinus, FaTrash, FaShoppingCart } from "react-icons/fa"
 import Header from "../../components/Header"
 import Footer from "../../components/Footer"
 import "./CartPage.css"
 
 const CartPage = () => {
+  const navigate = useNavigate()
+
   // Sample cart data - in real app, this would come from props or context
   const [cartItems, setCartItems] = useState([
     {
@@ -77,8 +81,9 @@ const CartPage = () => {
       alert("Your cart is empty!")
       return
     }
-    alert(`Order placed successfully! Total: $${calculateTotal().toFixed(2)}`)
-    setCartItems([])
+
+    // Navigate to checkout page
+    navigate("/checkout")
   }
 
   return (
