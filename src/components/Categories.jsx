@@ -1,21 +1,22 @@
-import React from 'react'
+import { Link } from "react-router-dom"
 import "../styles/Categories.css"
 
-const Categories = () => {
-    const categories = [
-        { emoji: "🍰", name: "Cakes" },
-        { emoji: "🍩", name: "Donuts" },
-        { emoji: "🍪", name: "Cookies" },
-        { emoji: "🧁", name: "Cupcakes" },
-      ]
+function Categories() {
+  const categories = [
+    { emoji: "🍰", name: "Cakes", link: "/products" },
+    { emoji: "🍩", name: "Donuts", link: "/products" },
+    { emoji: "🍪", name: "Cookies", link: "/products" },
+    { emoji: "🧁", name: "Cupcakes", link: "/products" },
+  ]
+
   return (
     <section className="categories">
       <div className="categories-container">
         {categories.map((category, index) => (
-          <a href="#" className="category-item" key={index}>
+          <Link to={category.link} className="category-item" key={index}>
             <span className="category-emoji">{category.emoji}</span>
             <span className="category-name">{category.name}</span>
-          </a>
+          </Link>
         ))}
       </div>
     </section>

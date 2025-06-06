@@ -48,7 +48,7 @@
     text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
   }
   
-  .shop-now-btn {
+.explore-now-btn {
     background-color: rgb(250, 139, 140);
     color: #333;
     border: none;
@@ -58,9 +58,10 @@
     border-radius: 4px;
     transition: background-color 0.3s;
     cursor: pointer;
+    text-decoration: none;
   }
   
-  .shop-now-btn:hover {
+ .explore-now-btn:hover {
     background-color: #e0c9b0;
   }
   

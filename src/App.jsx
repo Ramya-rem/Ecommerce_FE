@@ -10,6 +10,7 @@ import CartPage from './pages/cart/CartPage'
 import CheckoutPage from './pages/checkout/CheckoutPage'
 import OrderConfirmationPage from './pages/checkout/OrderConfirmationPage'
 import { useEffect, useState } from 'react'
+import ProductsPage from './pages/products/productPage'
 
 function App() {
    const [forceRender, setForceRender] = useState(false)
@@ -32,6 +33,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/forgotpassword" element={<ForgotPassword />} />
           <Route path="/resetPassword/:token" element={<ResetPassword />} />
+          <Route path='/products' element={<ProductsPage />} />
         </Routes>
       </div>
     </Router>
