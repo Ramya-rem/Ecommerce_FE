@@ -1,9 +1,11 @@
+"use client"
 
 import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { FaArrowLeft, FaEdit, FaPlus, FaCheck, FaMapMarkerAlt, FaPercent } from "react-icons/fa"
 import Header from "../../components/Header"
 import Footer from "../../components/Footer"
+import UPIPayment from "../../components/UPIPayment"
 import "./CheckoutPage.css"
 
 const CheckoutPage = () => {
@@ -57,6 +59,7 @@ const CheckoutPage = () => {
   const [appliedCoupon, setAppliedCoupon] = useState(null)
   const [couponCode, setCouponCode] = useState("")
   const [couponError, setCouponError] = useState("")
+  const [showUPIPayment, setShowUPIPayment] = useState(false)
 
   // Available coupons (in a real app, this would come from an API)
   const availableCoupons = [
@@ -182,9 +185,31 @@ const CheckoutPage = () => {
       return
     }
 
-    // In a real app, you would send the order to your backend
-    alert("Order placed successfully! Thank you for your purchase.")
+    if (paymentMethod === "upi") {
+      setShowUPIPayment(true)
+    } else {
+      // Cash on Delivery
+      alert("Order placed successfully! Thank you for your purchase.")
+      navigate("/order-success")
+    }
+  }
+
+  const handleUPISuccess = (paymentData) => {
+    console.log("Payment successful:", paymentData)
+    setShowUPIPayment(false)
+
+    // Store payment data and navigate to success page
+    localStorage.setItem("paymentData", JSON.stringify(paymentData))
     navigate("/order-success")
+  }
+
+  const handleUPIFailure = (error) => {
+    console.error("Payment failed:", error)
+    alert(`Payment failed: ${error}`)
+  }
+
+  const handleUPIClose = () => {
+    setShowUPIPayment(false)
   }
 
   return (
@@ -413,7 +438,16 @@ const CheckoutPage = () => {
 
               {paymentMethod === "upi" && (
                 <div className="upi-details">
-                  <p>You will be redirected to complete the UPI payment after placing the order.</p>
+                  <p>You will be able to pay using any UPI app like PhonePe, Paytm, Google Pay, or BHIM.</p>
+                  <div className="upi-benefits">
+                    <h4>Benefits of UPI Payment:</h4>
+                    <ul>
+                      <li>✅ Instant payment confirmation</li>
+                      <li>✅ Secure and encrypted transactions</li>
+                      <li>✅ No need to share card details</li>
+                      <li>✅ Available 24/7</li>
+                    </ul>
+                  </div>
                 </div>
               )}
             </section>
@@ -494,12 +528,23 @@ const CheckoutPage = () => {
               </div>
 
               <button className="place-order-btn" onClick={handlePlaceOrder} disabled={!selectedAddress}>
-                Place Order
+                {paymentMethod === "upi" ? "Pay Now" : "Place Order"}
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      {/* UPI Payment Modal */}
+      {showUPIPayment && (
+        <UPIPayment
+          amount={calculateTotal()}
+          orderId={`ORD${Date.now()}`}
+          onSuccess={handleUPISuccess}
+          onFailure={handleUPIFailure}
+          onClose={handleUPIClose}
+        />
+      )}
 
       <Footer />
     </div>
