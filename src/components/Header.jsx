@@ -31,15 +31,15 @@ function Header({ cartItemCount, wishlistItemCount }) {
               <Link to="/shop">Shop</Link>
             </li>
             <li>
-              <Link to="/wishlist" className="wishlist-link">
+               <Link to="/wishlist">
                 Wishlist
-                {wishlistItemCount > 0 && <span className="wishlist-count">{wishlistItemCount}</span>}
+                {wishlistItemCount > 0 && <span className="nav-badge">{wishlistItemCount}</span>}
               </Link>
             </li>
             <li>
-              <Link to="/cart" className="cart-link">
+               <Link to="/cart">
                 Cart
-                {cartItemCount > 0 && <span className="cart-count">{cartItemCount}</span>}
+                {cartItemCount > 0 && <span className="nav-badge">{cartItemCount}</span>}
               </Link>
             </li>
             <li>
