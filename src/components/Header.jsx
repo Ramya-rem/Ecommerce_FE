@@ -1,15 +1,17 @@
 import { useState } from "react"
-import { Link } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom"
 import { FaUser, FaBars, FaTimes } from "react-icons/fa"
 import "../styles/Header.css"
 import logo from "../assets/crave&conquer.logo.png"
 
 function Header({ cartItemCount, wishlistItemCount }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const location = useLocation()  
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen)
   }
+  const isActive = (path) => location.pathname === path ? "active-link" : ""
 
   return (
     <header className="header">
@@ -25,28 +27,28 @@ function Header({ cartItemCount, wishlistItemCount }) {
         <nav className={`nav-menu ${mobileMenuOpen ? "active" : ""}`}>
           <ul>
             <li>
-              <Link to="/home">Home</Link>
+              <Link to="/home" className={isActive("/home")}>Home</Link>
             </li>
             <li>
-              <Link to="/shop">Shop</Link>
+              <Link to="/products" className={isActive("/products")}>Shop</Link>
             </li>
             <li>
-               <Link to="/wishlist">
+               <Link to="/wishlist" className={isActive("/wishlist")}>
                 Wishlist
                 {wishlistItemCount > 0 && <span className="nav-badge">{wishlistItemCount}</span>}
               </Link>
             </li>
             <li>
-               <Link to="/cart">
+               <Link to="/cart" className={isActive("/cart")}>
                 Cart
                 {cartItemCount > 0 && <span className="nav-badge">{cartItemCount}</span>}
               </Link>
             </li>
             <li>
-              <Link to="/orders">Orders</Link>
+              <Link to="/orders" className={isActive("/orders")}>Orders</Link>
             </li>
             <li className="icon-link">
-              <Link to="/profile">
+              <Link to="/profile" className={isActive("/profile")}>
                 <FaUser />
               </Link>
             </li>
