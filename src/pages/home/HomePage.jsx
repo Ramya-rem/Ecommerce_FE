@@ -23,11 +23,9 @@ const HomePage = () => {
     const isAlreadyInWishlist = wishlistItems.some((item) => item.id === product.id)
 
     if (isAlreadyInWishlist) {
-      // Remove from wishlist
       setWishlistItems(wishlistItems.filter((item) => item.id !== product.id))
       alert(`${product.name} removed from wishlist!`)
     } else {
-      // Add to wishlist
       setWishlistItems([...wishlistItems, product])
       alert(`${product.name} added to wishlist!`)
     }
@@ -36,15 +34,13 @@ const HomePage = () => {
   return (
     <div className="app">
       <Header cartItemCount={cartItems.length} wishlistItemCount={wishlistItems.length} />
-      <div className="content-wrapper">
+      <main className="main-content">
         <HeroSection />
         <Categories />
-        <div className="lower-sections">
-          <FeaturedDesserts addToCart={addToCart} addToWishlist={addToWishlist} wishlistItems={wishlistItems} />
-          <Offer />
-          <CustomerReview />
-        </div>
-      </div>
+        <FeaturedDesserts addToCart={addToCart} addToWishlist={addToWishlist} wishlistItems={wishlistItems} />
+        <Offer />
+        <CustomerReview />
+      </main>
       <Footer />
     </div>
   )
