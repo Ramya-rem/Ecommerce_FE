@@ -29,6 +29,8 @@ const Signup = () => {
 
     try {
       const response = await api.post("/signup", formData);
+      console.log(response,'response');
+      if (response)
       navigate("/login");
     } catch (error) {
       // Check for "User already exists" error from the backend
