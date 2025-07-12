@@ -1,45 +1,27 @@
-"use client"
-import { FaHeart, FaShoppingCart } from "react-icons/fa"
-import "../styles/FeaturedDesserts.css"
+import { FaHeart, FaShoppingCart } from "react-icons/fa";
+import "../styles/FeaturedDesserts.css";
+import { useEffect, useState } from "react";
+import api from "../../src/utils/api";
 
 function FeaturedDesserts({ addToCart, addToWishlist, wishlistItems }) {
-  const products = [
-    {
-      id: 1,
-      name: "🍓 Strawberry Cake",
-      description: "Fresh strawberries with cream cheese frosting",
-      price: 24.99,
-      image: "https://placehold.co/600x400",
-      badge: "Popular",
-    },
-    {
-      id: 2,
-      name: "🍫 Choco Lava",
-      description: "Warm chocolate cake with molten center",
-      price: 19.99,
-      image: "https://placehold.co/600x400",
-    },
-    {
-      id: 3,
-      name: "🥥 Coconut Cake",
-      description: "Light coconut cake with coconut flakes",
-      price: 22.99,
-      image: "https://placehold.co/600x400",
-      badge: "New",
-    },
-    {
-      id: 4,
-      name: "Matilda Cake",
-      description: "Light coconut cake with coconut flakes",
-      price: 49.99,
-      image: "https://placehold.co/600x400",
-      badge: "New",
-    },
-  ]
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    const fetchDesserts = async () => {
+      try {
+        const res = await api.get("/getallProduct?category=desert"); // Adjust if your endpoint is different
+        setProducts(res.data);
+      } catch (err) {
+        console.error("Failed to fetch desserts", err);
+      }
+    };
+
+    fetchDesserts();
+  }, []);
 
   const isInWishlist = (productId) => {
-    return wishlistItems.some((item) => item.id === productId)
-  }
+    return wishlistItems.some((item) => item._id === productId);
+  };
 
   return (
     <section className="featured-desserts">
@@ -47,16 +29,24 @@ function FeaturedDesserts({ addToCart, addToWishlist, wishlistItems }) {
         <h2>Featured Desserts</h2>
         <div className="products-grid">
           {products.map((product) => (
-            <div className="product-card" key={product.id}>
+            <div className="product-card" key={product._id}>
               <div className="product-image-container">
-                <img src={product.image || "/placeholder.svg"} alt={product.name} className="product-image" />
-                {product.badge && <span className="product-badge">{product.badge}</span>}
+                <img
+                  src={`${import.meta.env.VITE_BASE_URL}${product.image}`}
+                  alt={product.productName}
+                  className="product-image"
+                />
+                {product.badge && (
+                  <span className="product-badge">{product.badge}</span>
+                )}
               </div>
               <div className="product-details">
                 <div className="product-header">
-                  <h3>{product.name}</h3>
+                  <h3>{product.productName}</h3>
                   <button
-                    className={`wishlist-button ${isInWishlist(product.id) ? "active" : ""}`}
+                    className={`wishlist-button ${
+                      isInWishlist(product._id) ? "active" : ""
+                    }`}
                     onClick={() => addToWishlist(product)}
                   >
                     <FaHeart />
@@ -64,8 +54,13 @@ function FeaturedDesserts({ addToCart, addToWishlist, wishlistItems }) {
                 </div>
                 <p className="product-description">{product.description}</p>
                 <div className="product-footer">
-                  <span className="product-price">${product.price.toFixed(2)}</span>
-                  <button className="add-to-cart-btn" onClick={() => addToCart(product)}>
+                  <span className="product-price">
+                    ${product.price.toFixed(2)}
+                  </span>
+                  <button
+                    className="add-to-cart-btn"
+                    onClick={() => addToCart(product)}
+                  >
                     <FaShoppingCart />
                     Add to Cart
                   </button>
@@ -76,7 +71,7 @@ function FeaturedDesserts({ addToCart, addToWishlist, wishlistItems }) {
         </div>
       </div>
     </section>
-  )
+  );
 }
 
-export default FeaturedDesserts
+export default FeaturedDesserts;
