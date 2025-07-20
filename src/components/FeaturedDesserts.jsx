@@ -9,7 +9,7 @@ function FeaturedDesserts({ addToCart, addToWishlist, wishlistItems }) {
   useEffect(() => {
     const fetchDesserts = async () => {
       try {
-        const res = await api.get("/getallProduct?category=desert"); // Adjust if your endpoint is different
+        const res = await api.get("/getallProduct?category=desserts"); // Adjust if your endpoint is different
         setProducts(res.data);
       } catch (err) {
         console.error("Failed to fetch desserts", err);
