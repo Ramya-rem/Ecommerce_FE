@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { FaArrowLeft, FaEdit, FaPlus, FaCheck, FaMapMarkerAlt, FaPercent } from "react-icons/fa"
 import Header from "../../components/Header"
 import Footer from "../../components/Footer"
 import UPIPayment from "../../components/UPIPayment"
 import "./CheckoutPage.css"
+import api from "../../utils/api"
 
 const CheckoutPage = () => {
   const navigate = useNavigate()
@@ -29,6 +30,24 @@ const CheckoutPage = () => {
       image: "https://placehold.co/600x400",
     },
   ])
+
+  const [wishlistItemCount, setWishlistItemCount] = useState(0)
+
+  // Fetch wishlist count from backend
+  useEffect(() => {
+    const fetchWishlistCount = async () => {
+      try {
+        const response = await api.get("/getUserWishlist")
+        if (response.data.success) {
+          setWishlistItemCount(response.data.wishlistCount || 0)
+        }
+      } catch (error) {
+        console.error("Error fetching wishlist count:", error)
+      }
+    }
+
+    fetchWishlistCount()
+  }, [])
 
   const [addresses, setAddresses] = useState([
     {
@@ -214,7 +233,7 @@ const CheckoutPage = () => {
 
   return (
     <div className="checkout-page">
-      <Header cartItemCount={cartItems.reduce((total, item) => total + item.quantity, 0)} wishlistItemCount={0} />
+      <Header cartItemCount={cartItems.reduce((total, item) => total + item.quantity, 0)} wishlistItemCount={wishlistItemCount} />
 
       <div className="checkout-container">
         <div className="checkout-header">

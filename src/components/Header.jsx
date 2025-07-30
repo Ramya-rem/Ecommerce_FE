@@ -1,12 +1,32 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { FaUser, FaBars, FaTimes } from "react-icons/fa"
 import "../styles/Header.css"
 import logo from "../assets/crave&conquer.logo.png"
+import api from "../utils/api"
 
-function Header({ cartItemCount, wishlistItemCount }) {
+function Header({ cartItemCount, wishlistItemCount: propWishlistItemCount }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [wishlistItemCount, setWishlistItemCount] = useState(propWishlistItemCount || 0)
   const location = useLocation()  
+
+  // Fetch wishlist count from backend
+  useEffect(() => {
+    const fetchWishlistCount = async () => {
+      try {
+        const response = await api.get("/getUserWishlist")
+        if (response.data.success) {
+          setWishlistItemCount(response.data.wishlistCount || 0)
+        }
+      } catch (error) {
+        console.error("Error fetching wishlist count:", error)
+        // Keep the prop value if API call fails
+        setWishlistItemCount(propWishlistItemCount || 0)
+      }
+    }
+
+    fetchWishlistCount()
+  }, [propWishlistItemCount])
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen)

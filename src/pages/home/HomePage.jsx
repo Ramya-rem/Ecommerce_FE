@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Header from "../../components/Header"
 import HeroSection from "../../components/HeroSection"
 import Categories from "../../components/Categories"
@@ -9,31 +9,43 @@ import Offer from "../../components/Offer"
 import CustomerReview from "../../components/CustomerReview"
 import Footer from "../../components/Footer"
 import "./home.css"
+import api from "../../utils/api"
 
 const HomePage = () => {
   const [cartItems, setCartItems] = useState([])
   const [wishlistItems, setWishlistItems] = useState([])
+  const [wishlistItemCount, setWishlistItemCount] = useState(0)
+
+  // Fetch wishlist from backend
+  useEffect(() => {
+    const fetchWishlist = async () => {
+      try {
+        const response = await api.get("/getUserWishlist")
+        if (response.data.success) {
+          setWishlistItems(response.data.wishlistItems)
+          setWishlistItemCount(response.data.wishlistCount || 0)
+        }
+      } catch (error) {
+        console.error("Error fetching wishlist", error)
+      }
+    }
+
+    fetchWishlist()
+  }, [])
 
   const addToCart = (product) => {
     setCartItems([...cartItems, product])
     alert(`${product.name} added to cart!`)
   }
 
-  const addToWishlist = (product) => {
-    const isAlreadyInWishlist = wishlistItems.some((item) => item.id === product.id)
-
-    if (isAlreadyInWishlist) {
-      setWishlistItems(wishlistItems.filter((item) => item.id !== product.id))
-      alert(`${product.name} removed from wishlist!`)
-    } else {
-      setWishlistItems([...wishlistItems, product])
-      alert(`${product.name} added to wishlist!`)
-    }
+  const addToWishlist = (updatedWishlist) => {
+    setWishlistItems(updatedWishlist)
+    setWishlistItemCount(updatedWishlist.length)
   }
 
   return (
     <div className="app">
-      <Header cartItemCount={cartItems.length} wishlistItemCount={wishlistItems.length} />
+      <Header cartItemCount={cartItems.length} wishlistItemCount={wishlistItemCount} />
       <main className="main-content">
         <HeroSection />
         <Categories />

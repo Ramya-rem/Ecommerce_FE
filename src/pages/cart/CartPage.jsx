@@ -1,14 +1,32 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { FaArrowLeft, FaPlus, FaMinus, FaTrash, FaShoppingCart } from "react-icons/fa"
 import Header from "../../components/Header"
 import Footer from "../../components/Footer"
 import "./CartPage.css"
+import api from "../../utils/api"
 
 const CartPage = () => {
   const navigate = useNavigate()
+  const [wishlistItemCount, setWishlistItemCount] = useState(0)
+
+  // Fetch wishlist count from backend
+  useEffect(() => {
+    const fetchWishlistCount = async () => {
+      try {
+        const response = await api.get("/getUserWishlist")
+        if (response.data.success) {
+          setWishlistItemCount(response.data.wishlistCount || 0)
+        }
+      } catch (error) {
+        console.error("Error fetching wishlist count:", error)
+      }
+    }
+
+    fetchWishlistCount()
+  }, [])
 
   // Sample cart data - in real app, this would come from props or context
   const [cartItems, setCartItems] = useState([
@@ -39,8 +57,6 @@ const CartPage = () => {
       badge: "New",
     },
   ])
-
-  const [wishlistItems, setWishlistItems] = useState([])
 
   const updateQuantity = (productId, newQuantity) => {
     if (newQuantity < 1) return
@@ -88,7 +104,7 @@ const CartPage = () => {
 
   return (
     <div className="cart-page">
-      <Header cartItemCount={getTotalItems()} wishlistItemCount={wishlistItems.length} />
+      <Header cartItemCount={getTotalItems()} wishlistItemCount={wishlistItemCount} />
 
       <div className="cart-container">
         <div className="cart-header">

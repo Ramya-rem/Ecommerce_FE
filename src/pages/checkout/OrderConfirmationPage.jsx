@@ -1,11 +1,30 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { FaCheckCircle, FaBox, FaMapMarkerAlt, FaReceipt } from "react-icons/fa"
 import Header from "../../components/Header"
 import Footer from "../../components/Footer"
 import "./OrderConfirmationPage.css"
+import api from "../../utils/api"
 
 const OrderConfirmationPage = () => {
+  const [wishlistItemCount, setWishlistItemCount] = useState(0)
+
+  // Fetch wishlist count from backend
+  useEffect(() => {
+    const fetchWishlistCount = async () => {
+      try {
+        const response = await api.get("/getUserWishlist")
+        if (response.data.success) {
+          setWishlistItemCount(response.data.wishlistCount || 0)
+        }
+      } catch (error) {
+        console.error("Error fetching wishlist count:", error)
+      }
+    }
+
+    fetchWishlistCount()
+  }, [])
+
   const [orderDetails, setOrderDetails] = useState({
     orderId: "ORD-" + Math.floor(100000 + Math.random() * 900000),
     orderDate: new Date().toLocaleDateString(),
@@ -43,7 +62,7 @@ const OrderConfirmationPage = () => {
 
   return (
     <div className="confirmation-page">
-      <Header cartItemCount={0} wishlistItemCount={0} />
+      <Header cartItemCount={0} wishlistItemCount={wishlistItemCount} />
 
       <div className="confirmation-container">
         <div className="confirmation-header">
