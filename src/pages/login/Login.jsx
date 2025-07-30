@@ -18,17 +18,24 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");// Clear previous errors
-
-    try{
+    setError("");
+  
+    try {
       const response = await api.post("/login", formData);
-      console.log("Login response:", response);
+  
+      const token = response.data.token;
+  
+      // 🔐 Store the token in localStorage
+      localStorage.setItem("authToken", token);
+  
+      // Navigate after login
       navigate("/home");
-    }catch(err){
+    } catch (err) {
       console.error("Login error response:", err.response);
       setError(err.response?.data?.message || "Login failed. Try again");
-    }  
+    }
   };
+  
 
   return (
     <div className="login-container">

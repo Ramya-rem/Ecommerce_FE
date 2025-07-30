@@ -21,6 +21,7 @@ const ProductsPage = () => {
   const [sortBy, setSortBy] = useState("featured");
   const [priceRange, setPriceRange] = useState({ min: 0, max: 1000 });
   const [filteredProducts, setFilteredProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   // ✅ Fetch Products from Backend and Map Data
   useEffect(() => {
@@ -43,6 +44,21 @@ const ProductsPage = () => {
       }
     };
     fetchProducts();
+  }, []);
+
+  // ✅ Fetch User's Wishlist from Backend
+  useEffect(() => {
+    const fetchWishlist = async () => {
+      try {
+        const response = await api.get("/getUserWishlist");
+        if (response.data.success) {
+          setWishlistItems(response.data.wishlistItems);
+        }
+      } catch (error) {
+        console.error("Error fetching wishlist", error);
+      }
+    };
+    fetchWishlist();
   }, []);
 
   // ✅ Apply Filters & Sorting
@@ -99,16 +115,43 @@ const ProductsPage = () => {
     alert(`${product.name} added to cart!`);
   };
 
-  const addToWishlist = (product) => {
-    const isAlreadyInWishlist = wishlistItems.some(
-      (item) => item.id === product.id
-    );
-    if (isAlreadyInWishlist) {
-      setWishlistItems(wishlistItems.filter((item) => item.id !== product.id));
-      alert(`${product.name} removed from wishlist!`);
-    } else {
-      setWishlistItems([...wishlistItems, product]);
-      alert(`${product.name} added to wishlist!`);
+  const addToWishlist = async (product) => {
+    setLoading(true);
+    try {
+      const isAlreadyInWishlist = wishlistItems.some(
+        (item) => item.id === product.id
+      );
+
+      if (isAlreadyInWishlist) {
+        // Remove from wishlist
+        const response = await api.delete("/delete-wishlist", {
+          data: { productId: product.id }
+        });
+        
+        if (response.status === 200) {
+          setWishlistItems(wishlistItems.filter((item) => item.id !== product.id));
+          alert(`${product.name} removed from wishlist!`);
+        }
+      } else {
+        // Add to wishlist
+        const response = await api.post("/addTo-wishlist", {
+          productId: product.id
+        });
+        
+        if (response.status === 200) {
+          setWishlistItems([...wishlistItems, response.data.addedProduct]);
+          alert(`${product.name} added to wishlist!`);
+        }
+      }
+    } catch (error) {
+      console.error("Wishlist operation failed:", error);
+      if (error.response?.data?.message) {
+        alert(error.response.data.message);
+      } else {
+        alert("Failed to update wishlist. Please try again.");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -252,8 +295,9 @@ const ProductsPage = () => {
                       <button
                         className={`wishlist-button ${
                           isInWishlist(product.id) ? "active" : ""
-                        }`}
+                        } ${loading ? "loading" : ""}`}
                         onClick={() => addToWishlist(product)}
+                        disabled={loading}
                         aria-label={
                           isInWishlist(product.id)
                             ? "Remove from wishlist"

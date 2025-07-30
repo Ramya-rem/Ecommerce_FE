@@ -1,47 +1,58 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { FaHeart, FaShoppingCart, FaTrash, FaArrowLeft } from "react-icons/fa"
 import Header from "../../components/Header"
 import Footer from "../../components/Footer"
 import "./WishlistPage.css"
+import api from "../../utils/api"
 
 const WishlistPage = () => {
-  // Sample wishlist data - in real app, this would come from props or context
-  const [wishlistItems, setWishlistItems] = useState([
-    {
-      id: 1,
-      name: "🍓 Strawberry Cake",
-      description: "Fresh strawberries with cream cheese frosting",
-      price: 24.99,
-      image: "https://placehold.co/600x400",
-      badge: "Popular",
-      dateAdded: "2024-01-15",
-    },
-    {
-      id: 2,
-      name: "🍫 Choco Lava",
-      description: "Warm chocolate cake with molten center",
-      price: 19.99,
-      image: "https://placehold.co/600x400",
-      dateAdded: "2024-01-14",
-    },
-    {
-      id: 3,
-      name: "🥥 Coconut Cake",
-      description: "Light coconut cake with coconut flakes",
-      price: 22.99,
-      image: "https://placehold.co/600x400",
-      badge: "New",
-      dateAdded: "2024-01-13",
-    },
-  ])
-
+  const [wishlistItems, setWishlistItems] = useState([])
   const [cartItems, setCartItems] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
 
-  const removeFromWishlist = (productId) => {
-    const productToRemove = wishlistItems.find((item) => item.id === productId)
-    setWishlistItems(wishlistItems.filter((item) => item.id !== productId))
-    alert(`${productToRemove.name} removed from wishlist!`);
+  // ✅ Fetch Wishlist from Backend
+  useEffect(() => {
+    const fetchWishlist = async () => {
+      setLoading(true)
+      try {
+        const response = await api.get("/getUserWishlist")
+        if (response.data.success) {
+          setWishlistItems(response.data.wishlistItems)
+        }
+      } catch (error) {
+        console.error("Error fetching wishlist", error)
+        setError("Failed to load wishlist. Please try again.")
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchWishlist()
+  }, [])
+
+  const removeFromWishlist = async (productId) => {
+    setLoading(true)
+    try {
+      const response = await api.delete("/delete-wishlist", {
+        data: { productId }
+      })
+      
+      if (response.status === 200) {
+        const productToRemove = wishlistItems.find((item) => item.id === productId)
+        setWishlistItems(wishlistItems.filter((item) => item.id !== productId))
+        alert(`${productToRemove.name} removed from wishlist!`)
+      }
+    } catch (error) {
+      console.error("Error removing from wishlist", error)
+      if (error.response?.data?.message) {
+        alert(error.response.data.message)
+      } else {
+        alert("Failed to remove item from wishlist. Please try again.")
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   const addToCart = (product) => {
@@ -49,10 +60,26 @@ const WishlistPage = () => {
     alert(`${product.name} added to cart!`)
   }
 
-  const clearAllWishlist = () => {
+  const clearAllWishlist = async () => {
     if (window.confirm("Are you sure you want to clear your entire wishlist?")) {
-      setWishlistItems([])
-      alert("Wishlist cleared!")
+      setLoading(true)
+      try {
+        const response = await api.delete("/delete-wishlist?deleteAll=true")
+        
+        if (response.status === 200) {
+          setWishlistItems([])
+          alert("Wishlist cleared!")
+        }
+      } catch (error) {
+        console.error("Error clearing wishlist", error)
+        if (error.response?.data?.message) {
+          alert(error.response.data.message)
+        } else {
+          alert("Failed to clear wishlist. Please try again.")
+        }
+      } finally {
+        setLoading(false)
+      }
     }
   }
 
@@ -61,7 +88,38 @@ const WishlistPage = () => {
 
     setCartItems([...cartItems, ...wishlistItems])
     const itemCount = wishlistItems.length
-    alert(`${itemCount} items added to cart!`);
+    alert(`${itemCount} items added to cart!`)
+  }
+
+  if (loading && wishlistItems.length === 0) {
+    return (
+      <div className="wishlist-page">
+        <Header cartItemCount={cartItems.length} wishlistItemCount={wishlistItems.length} />
+        <div className="wishlist-container">
+          <div className="loading-state">
+            <div className="loading-spinner"></div>
+            <p>Loading your wishlist...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="wishlist-page">
+        <Header cartItemCount={cartItems.length} wishlistItemCount={wishlistItems.length} />
+        <div className="wishlist-container">
+          <div className="error-state">
+            <h2>Something went wrong</h2>
+            <p>{error}</p>
+            <button onClick={() => window.location.reload()}>Try Again</button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    )
   }
 
   return (
@@ -85,7 +143,11 @@ const WishlistPage = () => {
                 <FaShoppingCart />
                 Add All to Cart
               </button>
-              <button className="clear-all-btn" onClick={clearAllWishlist}>
+              <button 
+                className="clear-all-btn" 
+                onClick={clearAllWishlist}
+                disabled={loading}
+              >
                 <FaTrash />
                 Clear All
               </button>
@@ -109,11 +171,16 @@ const WishlistPage = () => {
             {wishlistItems.map((item) => (
               <div className="wishlist-item" key={item.id}>
                 <div className="item-image-container">
-                  <img src={item.image || "/placeholder.svg"} alt={item.name} className="item-image" />
+                  <img 
+                    src={`http://localhost:7777${item.image}`} 
+                    alt={item.name} 
+                    className="item-image" 
+                  />
                   {item.badge && <span className="item-badge">{item.badge}</span>}
                   <button
                     className="remove-btn"
                     onClick={() => removeFromWishlist(item.id)}
+                    disabled={loading}
                     title="Remove from wishlist"
                   >
                     <FaTrash />
@@ -121,10 +188,10 @@ const WishlistPage = () => {
                 </div>
 
                 <div className="item-details">
-                  <h3 className="item-name">{item.name}</h3>
+                  <h3 className="item-name">{item.productName}</h3>
                   <p className="item-description">{item.description}</p>
                   <div className="item-price">${item.price.toFixed(2)}</div>
-                  <div className="item-date">Added on {new Date(item.dateAdded).toLocaleDateString()}</div>
+                  <div className="item-category">{item.category}</div>
 
                   <div className="item-actions">
                     <button className="add-to-cart-btn" onClick={() => addToCart(item)}>
