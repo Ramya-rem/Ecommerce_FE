@@ -135,6 +135,15 @@
   background-color: #e0c9b0;
 }
 
+.add-to-cart-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.add-to-cart-btn:disabled:hover {
+  background-color: #efdbc7;
+}
+
 @media (max-width: 768px) {
   .products-grid {
     grid-template-columns: 1fr;

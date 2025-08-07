@@ -11,6 +11,8 @@ import api from "../../utils/api"
 const CartPage = () => {
   const navigate = useNavigate()
   const [wishlistItemCount, setWishlistItemCount] = useState(0)
+  const [cartItems, setCartItems] = useState([])
+  const [loading, setLoading] = useState(false)
 
   // Fetch wishlist count from backend
   useEffect(() => {
@@ -28,51 +30,92 @@ const CartPage = () => {
     fetchWishlistCount()
   }, [])
 
-  // Sample cart data - in real app, this would come from props or context
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: "🍓 Strawberry Cake",
-      description: "Fresh strawberries with cream cheese frosting",
-      price: 24.99,
-      quantity: 2,
-      image: "https://placehold.co/600x400",
-      badge: "Popular",
-    },
-    {
-      id: 2,
-      name: "🍫 Choco Lava",
-      description: "Warm chocolate cake with molten center",
-      price: 19.99,
-      quantity: 1,
-      image: "https://placehold.co/600x400",
-    },
-    {
-      id: 3,
-      name: "🥥 Coconut Cake",
-      description: "Light coconut cake with coconut flakes",
-      price: 22.99,
-      quantity: 3,
-      image: "https://placehold.co/600x400",
-      badge: "New",
-    },
-  ])
+  // Fetch cart from backend
+  useEffect(() => {
+    const fetchCart = async () => {
+      setLoading(true)
+      try {
+        const response = await api.get("/getUsercart")
+        if (response.data.success) {
+          setCartItems(response.data.cartItems)
+        }
+      } catch (error) {
+        console.error("Error fetching cart", error)
+      } finally {
+        setLoading(false)
+      }
+    }
 
-  const updateQuantity = (productId, newQuantity) => {
-    if (newQuantity < 1) return
-    setCartItems(cartItems.map((item) => (item.id === productId ? { ...item, quantity: newQuantity } : item)))
+    fetchCart()
+  }, [])
+
+  const updateQuantity = async (productId, action) => {
+    try {
+      const response = await api.post("/update-cartQuantity", {
+        productId,
+        action
+      })
+      
+      if (response.status === 200) {
+        // Refresh cart data from backend
+        const cartResponse = await api.get("/getUsercart")
+        if (cartResponse.data.success) {
+          setCartItems(cartResponse.data.cartItems)
+        }
+      }
+    } catch (error) {
+      console.error("Update quantity failed:", error)
+      if (error.response?.data?.message) {
+        alert(error.response.data.message)
+      } else {
+        alert("Failed to update quantity. Please try again.")
+      }
+    }
   }
 
-  const removeFromCart = (productId) => {
-    const productToRemove = cartItems.find((item) => item.id === productId)
-    setCartItems(cartItems.filter((item) => item.id !== productId))
-    alert(`${productToRemove.name} removed from cart!`)
+  const removeFromCart = async (productId) => {
+    try {
+      const response = await api.delete("/deletecart", {
+        data: { productId }
+      })
+      
+      if (response.status === 200) {
+        // Refresh cart data from backend
+        const cartResponse = await api.get("/getUsercart")
+        if (cartResponse.data.success) {
+          setCartItems(cartResponse.data.cartItems)
+        }
+        
+        const productToRemove = cartItems.find((item) => item.id === productId)
+        alert(`${productToRemove.productName} removed from cart!`)
+      }
+    } catch (error) {
+      console.error("Remove from cart failed:", error)
+      if (error.response?.data?.message) {
+        alert(error.response.data.message)
+      } else {
+        alert("Failed to remove item from cart. Please try again.")
+      }
+    }
   }
 
-  const clearCart = () => {
+  const clearCart = async () => {
     if (window.confirm("Are you sure you want to clear your cart?")) {
-      setCartItems([])
-      alert("Cart cleared!")
+      try {
+        const response = await api.delete("/deletecart?clearcart=true")
+        
+        if (response.status === 200) {
+          setCartItems([])
+          alert("Cart cleared!")
+        }
+      } catch (error) {
+        console.error("Clear cart failed:", error)
+        if (error.response?.data?.message) {
+          alert(error.response.data.message)
+        } else {
+          alert("Failed to clear cart. Please try again.")
+        }
+      }
     }
   }
 
@@ -100,6 +143,21 @@ const CartPage = () => {
 
     // Navigate to checkout page
     navigate("/checkout")
+  }
+
+  if (loading) {
+    return (
+      <div className="cart-page">
+        <Header cartItemCount={0} wishlistItemCount={wishlistItemCount} />
+        <div className="cart-container">
+          <div className="loading-state">
+            <div className="loading-spinner"></div>
+            <p>Loading your cart...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    )
   }
 
   return (
@@ -134,7 +192,7 @@ const CartPage = () => {
             </div>
             <h2>Your cart is empty</h2>
             <p>Add some delicious desserts to your cart and enjoy!</p>
-            <Link to="/home" className="continue-shopping-btn">
+            <Link to="/products" className="continue-shopping-btn">
               Continue Shopping
             </Link>
           </div>
@@ -144,7 +202,7 @@ const CartPage = () => {
               {cartItems.map((item) => (
                 <div className="cart-item" key={item.id}>
                   <div className="item-image-container">
-                    <img src={item.image || "/placeholder.svg"} alt={item.name} className="item-image" />
+                    <img src={`http://localhost:7777${item.image}`} alt={item.productName} className="item-image" />
                     {item.badge && <span className="item-badge">{item.badge}</span>}
                     <button className="remove-btn" onClick={() => removeFromCart(item.id)} title="Remove from cart">
                       <FaTrash />
@@ -153,7 +211,7 @@ const CartPage = () => {
 
                   <div className="item-details">
                     <div className="item-info">
-                      <h3 className="item-name">{item.name}</h3>
+                      <h3 className="item-name">{item.productName}</h3>
                       <p className="item-description">{item.description}</p>
                       <div className="item-price">${item.price.toFixed(2)} each</div>
                     </div>
@@ -162,13 +220,13 @@ const CartPage = () => {
                       <div className="quantity-controls">
                         <button
                           className="quantity-btn"
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          onClick={() => updateQuantity(item.id, "decrease")}
                           disabled={item.quantity <= 1}
                         >
                           <FaMinus />
                         </button>
                         <span className="quantity">{item.quantity}</span>
-                        <button className="quantity-btn" onClick={() => updateQuantity(item.id, item.quantity + 1)}>
+                        <button className="quantity-btn" onClick={() => updateQuantity(item.id, "increase")}>
                           <FaPlus />
                         </button>
                       </div>
@@ -210,7 +268,7 @@ const CartPage = () => {
                   Order Now
                 </button>
 
-                <Link to="/home" className="continue-shopping-link">
+                <Link to="/products" className="continue-shopping-link">
                   Continue Shopping
                 </Link>
               </div>

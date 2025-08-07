@@ -11,27 +11,28 @@ import api from "../../utils/api"
 
 const CheckoutPage = () => {
   const navigate = useNavigate()
-  const [cartItems, setCartItems] = useState([
-    {
-      id: 1,
-      name: "🍓 Strawberry Cake",
-      description: "Fresh strawberries with cream cheese frosting",
-      price: 24.99,
-      quantity: 2,
-      image: "https://placehold.co/600x400",
-      badge: "Popular",
-    },
-    {
-      id: 2,
-      name: "🍫 Choco Lava",
-      description: "Warm chocolate cake with molten center",
-      price: 19.99,
-      quantity: 1,
-      image: "https://placehold.co/600x400",
-    },
-  ])
-
+  const [cartItems, setCartItems] = useState([])
   const [wishlistItemCount, setWishlistItemCount] = useState(0)
+  const [loading, setLoading] = useState(false)
+
+  // Fetch cart data from backend
+  useEffect(() => {
+    const fetchCart = async () => {
+      setLoading(true)
+      try {
+        const response = await api.get("/getUsercart")
+        if (response.data.success) {
+          setCartItems(response.data.cartItems)
+        }
+      } catch (error) {
+        console.error("Error fetching cart", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchCart()
+  }, [])
 
   // Fetch wishlist count from backend
   useEffect(() => {
@@ -204,6 +205,11 @@ const CheckoutPage = () => {
       return
     }
 
+    if (cartItems.length === 0) {
+      alert("Your cart is empty!")
+      return
+    }
+
     if (paymentMethod === "upi") {
       setShowUPIPayment(true)
     } else {
@@ -229,6 +235,39 @@ const CheckoutPage = () => {
 
   const handleUPIClose = () => {
     setShowUPIPayment(false)
+  }
+
+  if (loading) {
+    return (
+      <div className="checkout-page">
+        <Header cartItemCount={0} wishlistItemCount={wishlistItemCount} />
+        <div className="checkout-container">
+          <div className="loading-state">
+            <div className="loading-spinner"></div>
+            <p>Loading your cart...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    )
+  }
+
+  if (cartItems.length === 0) {
+    return (
+      <div className="checkout-page">
+        <Header cartItemCount={0} wishlistItemCount={wishlistItemCount} />
+        <div className="checkout-container">
+          <div className="empty-cart">
+            <h2>Your cart is empty</h2>
+            <p>Add some items to your cart before proceeding to checkout.</p>
+            <Link to="/products" className="continue-shopping-btn">
+              Continue Shopping
+            </Link>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    )
   }
 
   return (
@@ -408,10 +447,10 @@ const CheckoutPage = () => {
                 {cartItems.map((item) => (
                   <div className="order-item" key={item.id}>
                     <div className="item-image-container">
-                      <img src={item.image || "/placeholder.svg"} alt={item.name} className="item-image" />
+                      <img src={`http://localhost:7777${item.image}`} alt={item.productName} className="item-image" />
                     </div>
                     <div className="item-details">
-                      <h3 className="item-name">{item.name}</h3>
+                      <h3 className="item-name">{item.productName}</h3>
                       <p className="item-description">{item.description}</p>
                       <div className="item-price-qty">
                         <span className="item-price">${item.price.toFixed(2)} each</span>

@@ -6,6 +6,7 @@ import api from "../utils/api";
 function FeaturedDesserts({ addToCart, addToWishlist, wishlistItems }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [cartLoading, setCartLoading] = useState(false);
 
   useEffect(() => {
     const fetchDesserts = async () => {
@@ -64,6 +65,20 @@ function FeaturedDesserts({ addToCart, addToWishlist, wishlistItems }) {
     }
   };
 
+  const handleAddToCart = async (product) => {
+    setCartLoading(true);
+    try {
+      // Call parent's addToCart function instead of making direct API call
+      await addToCart(product);
+      // The parent function will handle the API call and show appropriate messages
+    } catch (error) {
+      console.error("Add to cart failed:", error);
+      // Error handling is done in the parent component
+    } finally {
+      setCartLoading(false);
+    }
+  };
+
   return (
     <section className="featured-desserts">
       <div className="featured-container">
@@ -106,10 +121,11 @@ function FeaturedDesserts({ addToCart, addToWishlist, wishlistItems }) {
                   </span>
                   <button
                     className="add-to-cart-btn"
-                    onClick={() => addToCart(product)}
+                    onClick={() => handleAddToCart(product)}
+                    disabled={cartLoading}
                   >
                     <FaShoppingCart />
-                    Add to Cart
+                    {cartLoading ? "Adding..." : "Add to Cart"}
                   </button>
                 </div>
               </div>

@@ -22,6 +22,7 @@ const ProductsPage = () => {
   const [priceRange, setPriceRange] = useState({ min: 0, max: 1000 });
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [cartLoading, setCartLoading] = useState(false);
 
   // ✅ Fetch Products from Backend and Map Data
   useEffect(() => {
@@ -59,6 +60,21 @@ const ProductsPage = () => {
       }
     };
     fetchWishlist();
+  }, []);
+
+  // ✅ Fetch User's Cart from Backend
+  useEffect(() => {
+    const fetchCart = async () => {
+      try {
+        const response = await api.get("/getUsercart");
+        if (response.data.success) {
+          setCartItems(response.data.cartItems);
+        }
+      } catch (error) {
+        console.error("Error fetching cart", error);
+      }
+    };
+    fetchCart();
   }, []);
 
   // ✅ Apply Filters & Sorting
@@ -99,20 +115,32 @@ const ProductsPage = () => {
     setFilteredProducts(result);
   }, [products, selectedCategory, sortBy, priceRange]);
 
-  const addToCart = (product) => {
-    const existingItem = cartItems.find((item) => item.id === product.id);
-    if (existingItem) {
-      setCartItems(
-        cartItems.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        )
-      );
-    } else {
-      setCartItems([...cartItems, { ...product, quantity: 1 }]);
+  const addToCart = async (product) => {
+    setCartLoading(true);
+    try {
+      const response = await api.post("/addtocart", {
+        productId: product.id,
+        quantity: 1
+      });
+      
+      if (response.status === 200) {
+        // Refresh cart data from backend
+        const cartResponse = await api.get("/getUsercart");
+        if (cartResponse.data.success) {
+          setCartItems(cartResponse.data.cartItems);
+        }
+        alert(`${product.name} added to cart!`);
+      }
+    } catch (error) {
+      console.error("Add to cart failed:", error);
+      if (error.response?.data?.message) {
+        alert(error.response.data.message);
+      } else {
+        alert("Failed to add item to cart. Please try again.");
+      }
+    } finally {
+      setCartLoading(false);
     }
-    alert(`${product.name} added to cart!`);
   };
 
   const addToWishlist = async (product) => {
@@ -329,9 +357,10 @@ const ProductsPage = () => {
                         <button
                           className="add-to-cart-btn"
                           onClick={() => addToCart(product)}
+                          disabled={cartLoading}
                         >
                           <FaShoppingCart />
-                          Add to Cart
+                          {cartLoading ? "Adding..." : "Add to Cart"}
                         </button>
                       </div>
                     </div>

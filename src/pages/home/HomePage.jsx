@@ -1,5 +1,3 @@
-"use client"
-
 import { useState, useEffect } from "react"
 import Header from "../../components/Header"
 import HeroSection from "../../components/HeroSection"
@@ -33,9 +31,57 @@ const HomePage = () => {
     fetchWishlist()
   }, [])
 
-  const addToCart = (product) => {
-    setCartItems([...cartItems, product])
-    alert(`${product.name} added to cart!`)
+  // Fetch cart from backend
+  useEffect(() => {
+    const fetchCart = async () => {
+      try {
+        const response = await api.get("/getUsercart")
+        if (response.data.success) {
+          setCartItems(response.data.cartItems)
+        }
+      } catch (error) {
+        console.error("Error fetching cart", error)
+      }
+    }
+
+    fetchCart()
+  }, [])
+
+  const addToCart = async (product) => {
+    try {
+      const response = await api.post("/addtocart", {
+        productId: product._id,
+        quantity: 1
+      })
+      
+      if (response.status === 200) {
+        // Refresh cart data from backend
+        const cartResponse = await api.get("/getUsercart")
+        if (cartResponse.data.success) {
+          setCartItems(cartResponse.data.cartItems)
+        }
+        alert(`${product.productName} added to cart!`)
+      }
+    } catch (error) {
+      console.error("Add to cart failed:", error)
+      // Handle 409 status (product already in cart) as a success case
+      if (error.response?.status === 409) {
+        alert(error.response.data.message || "Product is already in your cart!")
+        // Refresh cart data to ensure UI is up to date
+        try {
+          const cartResponse = await api.get("/getUsercart")
+          if (cartResponse.data.success) {
+            setCartItems(cartResponse.data.cartItems)
+          }
+        } catch (refreshError) {
+          console.error("Error refreshing cart:", refreshError)
+        }
+      } else if (error.response?.data?.message) {
+        alert(error.response.data.message)
+      } else {
+        alert("Failed to add item to cart. Please try again.")
+      }
+    }
   }
 
   const addToWishlist = (updatedWishlist) => {
@@ -45,7 +91,7 @@ const HomePage = () => {
 
   return (
     <div className="app">
-      <Header cartItemCount={cartItems.length} wishlistItemCount={wishlistItemCount} />
+      <Header cartItemCount={cartItems.reduce((total, item) => total + item.quantity, 0)} wishlistItemCount={wishlistItemCount} />
       <main className="main-content">
         <HeroSection />
         <Categories />
