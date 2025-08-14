@@ -14,6 +14,12 @@ const CheckoutPage = () => {
   const [cartItems, setCartItems] = useState([])
   const [wishlistItemCount, setWishlistItemCount] = useState(0)
   const [loading, setLoading] = useState(false)
+  const [orderSummary, setOrderSummary] = useState({
+    subtotal: 0,
+    tax: 0,
+    shipping: "FREE",
+    total: 0
+  })
 
   // Fetch cart data from backend
   useEffect(() => {
@@ -49,6 +55,44 @@ const CheckoutPage = () => {
 
     fetchWishlistCount()
   }, [])
+
+  // Fetch order summary from backend
+  const fetchOrderSummary = async () => {
+    try {
+      const response = await api.get("/fetchOrderSummary")
+      if (response.status === 200) {
+        setOrderSummary({
+          subtotal: Number(response.data.subtotal) || 0,
+          tax: Number(response.data.tax) || 0,
+          shipping: response.data.shipping || "FREE",
+          total: Number(response.data.total) || 0
+        })
+      }
+    } catch (error) {
+      console.error("Error fetching order summary:", error)
+      // Reset to default values if API fails
+      setOrderSummary({
+        subtotal: 0,
+        tax: 0,
+        shipping: "FREE",
+        total: 0
+      })
+    }
+  }
+
+  // Fetch order summary when cart items change
+  useEffect(() => {
+    if (cartItems.length > 0) {
+      fetchOrderSummary()
+    } else {
+      setOrderSummary({
+        subtotal: 0,
+        tax: 0,
+        shipping: "FREE",
+        total: 0
+      })
+    }
+  }, [cartItems])
 
   const [addresses, setAddresses] = useState([
     {
@@ -88,18 +132,10 @@ const CheckoutPage = () => {
     { code: "NEWUSER", discount: 15, type: "percentage", minOrder: 50 },
   ]
 
-  const calculateSubtotal = () => {
-    return cartItems.reduce((total, item) => total + item.price * item.quantity, 0)
-  }
-
-  const calculateTax = () => {
-    return calculateSubtotal() * 0.08 // 8% tax
-  }
-
   const calculateDiscount = () => {
     if (!appliedCoupon) return 0
 
-    const subtotal = calculateSubtotal()
+    const subtotal = orderSummary.subtotal
     if (subtotal < appliedCoupon.minOrder) return 0
 
     if (appliedCoupon.type === "percentage") {
@@ -110,7 +146,8 @@ const CheckoutPage = () => {
   }
 
   const calculateTotal = () => {
-    return calculateSubtotal() + calculateTax() - calculateDiscount()
+    const discount = calculateDiscount()
+    return orderSummary.total - discount
   }
 
   const handleAddressSelect = (address) => {
@@ -183,7 +220,7 @@ const CheckoutPage = () => {
       return
     }
 
-    if (calculateSubtotal() < coupon.minOrder) {
+    if (orderSummary.subtotal < coupon.minOrder) {
       setCouponError(`Minimum order amount of $${coupon.minOrder.toFixed(2)} required`)
       return
     }
@@ -558,12 +595,12 @@ const CheckoutPage = () => {
 
               <div className="summary-row">
                 <span>Subtotal ({cartItems.reduce((total, item) => total + item.quantity, 0)} items)</span>
-                <span>${calculateSubtotal().toFixed(2)}</span>
+                <span>${orderSummary.subtotal.toFixed(2)}</span>
               </div>
 
               <div className="summary-row">
                 <span>Tax (8%)</span>
-                <span>${calculateTax().toFixed(2)}</span>
+                <span>${orderSummary.tax.toFixed(2)}</span>
               </div>
 
               {appliedCoupon && (
@@ -575,7 +612,7 @@ const CheckoutPage = () => {
 
               <div className="summary-row shipping">
                 <span>Shipping</span>
-                <span className="free">FREE</span>
+                <span className="free">{orderSummary.shipping}</span>
               </div>
 
               <div className="summary-divider"></div>
