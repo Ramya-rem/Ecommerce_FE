@@ -236,7 +236,7 @@ const CheckoutPage = () => {
     setCouponError("")
   }
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     if (!selectedAddress) {
       alert("Please select a delivery address")
       return
@@ -251,18 +251,87 @@ const CheckoutPage = () => {
       setShowUPIPayment(true)
     } else {
       // Cash on Delivery
-      alert("Order placed successfully! Thank you for your purchase.")
-      navigate("/order-success")
+      try {
+        setLoading(true)
+        
+        const deliveryAddress = {
+          fullName: selectedAddress.name,
+          phoneNumber: selectedAddress.phone,
+          addressLine: `${selectedAddress.address}, ${selectedAddress.city}, ${selectedAddress.state} ${selectedAddress.zipCode}`
+        }
+
+        const orderData = {
+          deliveryAddress,
+          editAddress: true // This will update the user's saved address
+        }
+
+        const response = await api.post("/place-order", orderData)
+        
+        if (response.status === 201) {
+          // Store cart items and address for order confirmation page
+          localStorage.setItem("cartItems", JSON.stringify(cartItems))
+          localStorage.setItem("selectedAddress", JSON.stringify(selectedAddress))
+          
+          alert("Order placed successfully! Thank you for your purchase.")
+          navigate("/order-success", { 
+            state: { 
+              orderId: response.data.orderId,
+              totalAmount: response.data.totalAmount 
+            }
+          })
+        }
+      } catch (error) {
+        console.error("Error placing order:", error)
+        const errorMessage = error.response?.data?.message || "Failed to place order. Please try again."
+        alert(errorMessage)
+      } finally {
+        setLoading(false)
+      }
     }
   }
 
-  const handleUPISuccess = (paymentData) => {
+  const handleUPISuccess = async (paymentData) => {
     console.log("Payment successful:", paymentData)
     setShowUPIPayment(false)
 
-    // Store payment data and navigate to success page
-    localStorage.setItem("paymentData", JSON.stringify(paymentData))
-    navigate("/order-success")
+    try {
+      setLoading(true)
+      
+      const deliveryAddress = {
+        fullName: selectedAddress.name,
+        phoneNumber: selectedAddress.phone,
+        addressLine: `${selectedAddress.address}, ${selectedAddress.city}, ${selectedAddress.state} ${selectedAddress.zipCode}`
+      }
+
+      const orderData = {
+        deliveryAddress,
+        editAddress: true,
+        paymentMethod: "upi",
+        paymentData: paymentData
+      }
+
+      const response = await api.post("/place-order", orderData)
+      
+      if (response.status === 201) {
+        // Store cart items, address, and payment data for order confirmation page
+        localStorage.setItem("cartItems", JSON.stringify(cartItems))
+        localStorage.setItem("selectedAddress", JSON.stringify(selectedAddress))
+        localStorage.setItem("paymentData", JSON.stringify(paymentData))
+        
+        navigate("/order-success", { 
+          state: { 
+            orderId: response.data.orderId,
+            totalAmount: response.data.totalAmount 
+          }
+        })
+      }
+    } catch (error) {
+      console.error("Error placing order after UPI payment:", error)
+      const errorMessage = error.response?.data?.message || "Payment successful but order placement failed. Please contact support."
+      alert(errorMessage)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleUPIFailure = (error) => {
@@ -622,8 +691,12 @@ const CheckoutPage = () => {
                 <span>${calculateTotal().toFixed(2)}</span>
               </div>
 
-              <button className="place-order-btn" onClick={handlePlaceOrder} disabled={!selectedAddress}>
-                {paymentMethod === "upi" ? "Pay Now" : "Place Order"}
+              <button 
+                className="place-order-btn" 
+                onClick={handlePlaceOrder} 
+                disabled={!selectedAddress || loading}
+              >
+                {loading ? "Processing..." : (paymentMethod === "upi" ? "Pay Now" : "Place Order")}
               </button>
             </div>
           </div>

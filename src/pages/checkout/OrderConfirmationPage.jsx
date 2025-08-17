@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Link } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom"
 import { FaCheckCircle, FaBox, FaMapMarkerAlt, FaReceipt } from "react-icons/fa"
 import Header from "../../components/Header"
 import Footer from "../../components/Footer"
@@ -7,7 +7,11 @@ import "./OrderConfirmationPage.css"
 import api from "../../utils/api"
 
 const OrderConfirmationPage = () => {
+  const location = useLocation()
   const [wishlistItemCount, setWishlistItemCount] = useState(0)
+  const [orderDetails, setOrderDetails] = useState(null)
+  const [loading, setLoading] = useState(true)
+
 
   // Fetch wishlist count from backend
   useEffect(() => {
@@ -25,40 +29,73 @@ const OrderConfirmationPage = () => {
     fetchWishlistCount()
   }, [])
 
-  const [orderDetails, setOrderDetails] = useState({
-    orderId: "ORD-" + Math.floor(100000 + Math.random() * 900000),
-    orderDate: new Date().toLocaleDateString(),
-    estimatedDelivery: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toLocaleDateString(),
-    items: [
-      {
-        id: 1,
-        name: "🍓 Strawberry Cake",
-        price: 24.99,
-        quantity: 2,
-        image: "https://placehold.co/600x400",
-      },
-      {
-        id: 2,
-        name: "🍫 Choco Lava",
-        price: 19.99,
-        quantity: 1,
-        image: "https://placehold.co/600x400",
-      },
-    ],
-    address: {
-      name: "John Doe",
-      phone: "123-456-7890",
-      address: "123 Baker Street",
-      city: "New York",
-      state: "NY",
-      zipCode: "10001",
-    },
-    paymentMethod: "Cash on Delivery",
-    subtotal: 69.97,
-    tax: 5.6,
-    discount: 7.0,
-    total: 68.57,
-  })
+  // Get order details from location state or localStorage
+  useEffect(() => {
+    const getOrderDetails = () => {
+      try {
+        // Try to get from location state first (from checkout page)
+        if (location.state && location.state.orderId) {
+          const orderData = {
+            orderId: location.state.orderId,
+            totalAmount: location.state.totalAmount,
+            orderDate: new Date().toLocaleDateString(),
+            estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+            paymentMethod: localStorage.getItem("paymentData") ? "UPI" : "Cash on Delivery",
+            items: JSON.parse(localStorage.getItem("cartItems") || "[]"),
+            address: JSON.parse(localStorage.getItem("selectedAddress") || "{}"),
+            subtotal: location.state.totalAmount / 1.08, // Remove tax to get subtotal
+            tax: (location.state.totalAmount / 1.08) * 0.08,
+            total: location.state.totalAmount,
+            discount: 0
+          }
+          setOrderDetails(orderData)
+        } else {
+          // Fallback: redirect to home if no order data
+          window.location.href = "/home"
+        }
+      } catch (error) {
+        console.error("Error getting order details:", error)
+        window.location.href = "/home"
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    getOrderDetails()
+  }, [location.state])
+
+  if (loading) {
+    return (
+      <div className="confirmation-page">
+        <Header cartItemCount={0} wishlistItemCount={wishlistItemCount} />
+        <div className="confirmation-container">
+          <div className="loading-state">
+            <div className="loading-spinner"></div>
+            <p>Loading your order details...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    )
+  }
+
+  if (!orderDetails) {
+    return (
+      <div className="confirmation-page">
+        <Header cartItemCount={0} wishlistItemCount={wishlistItemCount} />
+        <div className="confirmation-container">
+          <div className="error-state">
+            <h2>Order not found</h2>
+            <p>Unable to retrieve order details. Please contact support.</p>
+            <Link to="/home" className="continue-shopping-btn">
+              Continue Shopping
+            </Link>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    )
+  }
 
   return (
     <div className="confirmation-page">
