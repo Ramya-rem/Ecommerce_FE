@@ -11,6 +11,7 @@ import CheckoutPage from './pages/checkout/CheckoutPage'
 import OrderConfirmationPage from './pages/checkout/OrderConfirmationPage'
 import { useEffect, useState } from 'react'
 import ProductsPage from './pages/products/productPage'
+import OrdersPage from './pages/orders/OrdersPage'
 
 function App() {
    const [forceRender, setForceRender] = useState(false)
@@ -29,6 +30,7 @@ function App() {
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/order-success" element={<OrderConfirmationPage />} />
+          <Route path="/orders" element={<OrdersPage />} />
           <Route path="/" element={<Signup />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgotpassword" element={<ForgotPassword />} />
