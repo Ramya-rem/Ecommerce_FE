@@ -146,10 +146,10 @@ const OrderConfirmationPage = () => {
                 {orderDetails.items.map((item) => (
                   <div className="order-item" key={item.id}>
                     <div className="item-image-container">
-                      <img src={item.image || "/placeholder.svg"} alt={item.name} className="item-image" />
+                      <img src={item.image ? `${import.meta.env.VITE_BASE_URL}${item.image}` : "/placeholder.svg"} alt={item.productName || item.name} className="item-image" />
                     </div>
                     <div className="item-details">
-                      <h3 className="item-name">{item.name}</h3>
+                      <h3 className="item-name">{item.productName || item.name}</h3>
                       <div className="item-price-qty">
                         <span className="item-price">${item.price.toFixed(2)} each</span>
                         <span className="item-quantity">Qty: {item.quantity}</span>

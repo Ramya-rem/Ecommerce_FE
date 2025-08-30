@@ -10,7 +10,7 @@ import CartPage from './pages/cart/CartPage'
 import CheckoutPage from './pages/checkout/CheckoutPage'
 import OrderConfirmationPage from './pages/checkout/OrderConfirmationPage'
 import { useEffect, useState } from 'react'
-import ProductsPage from './pages/products/productPage'
+import ProductsPage from './pages/products/ProductPage'
 import OrdersPage from './pages/orders/OrdersPage'
 
 function App() {
