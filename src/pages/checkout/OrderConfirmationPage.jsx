@@ -5,9 +5,11 @@ import Header from "../../components/Header"
 import Footer from "../../components/Footer"
 import "./OrderConfirmationPage.css"
 import api from "../../utils/api"
+import { useOrders } from "../../context/OrderContext"
 
 const OrderConfirmationPage = () => {
   const location = useLocation()
+  const { getOrderById } = useOrders()
   const [wishlistItemCount, setWishlistItemCount] = useState(0)
   const [orderDetails, setOrderDetails] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -29,26 +31,67 @@ const OrderConfirmationPage = () => {
     fetchWishlistCount()
   }, [])
 
-  // Get order details from location state or localStorage
+  // Get order details from location state, OrderContext, or localStorage
   useEffect(() => {
     const getOrderDetails = () => {
       try {
         // Try to get from location state first (from checkout page)
         if (location.state && location.state.orderId) {
-          const orderData = {
-            orderId: location.state.orderId,
-            totalAmount: location.state.totalAmount,
-            orderDate: new Date().toLocaleDateString(),
-            estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString(),
-            paymentMethod: localStorage.getItem("paymentData") ? "UPI" : "Cash on Delivery",
-            items: JSON.parse(localStorage.getItem("cartItems") || "[]"),
-            address: JSON.parse(localStorage.getItem("selectedAddress") || "{}"),
-            subtotal: location.state.totalAmount / 1.08, // Remove tax to get subtotal
-            tax: (location.state.totalAmount / 1.08) * 0.08,
-            total: location.state.totalAmount,
-            discount: 0
+          // First try to get from OrderContext
+          const contextOrder = getOrderById(location.state.orderId)
+          
+          if (contextOrder) {
+            // Use order from context
+            setOrderDetails({
+              orderId: contextOrder.id,
+              totalAmount: contextOrder.total,
+              orderDate: new Date(contextOrder.orderDate).toLocaleDateString(),
+              estimatedDelivery: contextOrder.estimatedDelivery 
+                ? new Date(contextOrder.estimatedDelivery).toLocaleDateString()
+                : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+              paymentMethod: contextOrder.paymentMethod || (localStorage.getItem("paymentData") ? "Card" : "Cash on Delivery"),
+              items: contextOrder.items || [],
+              address: contextOrder.deliveryAddress || {},
+              subtotal: contextOrder.subtotal || (contextOrder.total ? contextOrder.total / 1.08 : 0),
+              tax: contextOrder.tax || (contextOrder.total ? (contextOrder.total / 1.08) * 0.08 : 0),
+              total: contextOrder.total || location.state.totalAmount || 0,
+              discount: contextOrder.discount || 0
+            })
+          } else if (location.state.orderData) {
+            // Use orderData from location.state
+            const orderData = location.state.orderData
+            setOrderDetails({
+              orderId: location.state.orderId,
+              totalAmount: location.state.totalAmount || orderData.total || 0,
+              orderDate: new Date().toLocaleDateString(),
+              estimatedDelivery: orderData.estimatedDelivery 
+                ? new Date(orderData.estimatedDelivery).toLocaleDateString()
+                : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+              paymentMethod: orderData.paymentMethod || (localStorage.getItem("paymentData") ? "Card" : "Cash on Delivery"),
+              items: orderData.items || [],
+              address: orderData.deliveryAddress || {},
+              subtotal: orderData.subtotal || (orderData.total ? orderData.total / 1.08 : 0),
+              tax: orderData.tax || (orderData.total ? (orderData.total / 1.08) * 0.08 : 0),
+              total: orderData.total || location.state.totalAmount || 0,
+              discount: orderData.discount || 0
+            })
+          } else {
+            // Fallback: use location.state values
+            const totalAmount = location.state.totalAmount || 0
+            setOrderDetails({
+              orderId: location.state.orderId,
+              totalAmount: totalAmount,
+              orderDate: new Date().toLocaleDateString(),
+              estimatedDelivery: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+              paymentMethod: localStorage.getItem("paymentData") ? "Card" : "Cash on Delivery",
+              items: JSON.parse(localStorage.getItem("cartItems") || "[]"),
+              address: JSON.parse(localStorage.getItem("selectedAddress") || "{}"),
+              subtotal: totalAmount > 0 ? totalAmount / 1.08 : 0,
+              tax: totalAmount > 0 ? (totalAmount / 1.08) * 0.08 : 0,
+              total: totalAmount,
+              discount: 0
+            })
           }
-          setOrderDetails(orderData)
         } else {
           // Fallback: redirect to home if no order data
           window.location.href = "/home"
@@ -62,7 +105,7 @@ const OrderConfirmationPage = () => {
     }
 
     getOrderDetails()
-  }, [location.state])
+  }, [location.state, getOrderById])
 
   if (loading) {
     return (
@@ -143,18 +186,18 @@ const OrderConfirmationPage = () => {
               </div>
 
               <div className="order-items">
-                {orderDetails.items.map((item) => (
-                  <div className="order-item" key={item.id}>
+                {(orderDetails.items || []).map((item, index) => (
+                  <div className="order-item" key={item.id || item._id || index}>
                     <div className="item-image-container">
                       <img src={item.image ? `${import.meta.env.VITE_BASE_URL}${item.image}` : "/placeholder.svg"} alt={item.productName || item.name} className="item-image" />
                     </div>
                     <div className="item-details">
                       <h3 className="item-name">{item.productName || item.name}</h3>
                       <div className="item-price-qty">
-                        <span className="item-price">${item.price.toFixed(2)} each</span>
-                        <span className="item-quantity">Qty: {item.quantity}</span>
+                        <span className="item-price">${((item.price || 0)).toFixed(2)} each</span>
+                        <span className="item-quantity">Qty: {item.quantity || 1}</span>
                       </div>
-                      <div className="item-total">Total: ${(item.price * item.quantity).toFixed(2)}</div>
+                      <div className="item-total">Total: ${((item.price || 0) * (item.quantity || 1)).toFixed(2)}</div>
                     </div>
                   </div>
                 ))}
@@ -171,11 +214,11 @@ const OrderConfirmationPage = () => {
               </div>
 
               <div className="delivery-address">
-                <div className="address-name">{orderDetails.address.name}</div>
-                <div className="address-phone">{orderDetails.address.phone}</div>
+                <div className="address-name">{orderDetails.address?.name || "N/A"}</div>
+                <div className="address-phone">{orderDetails.address?.phone || "N/A"}</div>
                 <div className="address-details">
-                  {orderDetails.address.address}, {orderDetails.address.city}, {orderDetails.address.state}{" "}
-                  {orderDetails.address.zipCode}
+                  {orderDetails.address?.address || ""}, {orderDetails.address?.city || ""}, {orderDetails.address?.state || ""}{" "}
+                  {orderDetails.address?.zipCode || ""}
                 </div>
               </div>
             </section>
@@ -194,18 +237,18 @@ const OrderConfirmationPage = () => {
               <div className="order-summary">
                 <div className="summary-row">
                   <span>Subtotal</span>
-                  <span>${orderDetails.subtotal.toFixed(2)}</span>
+                  <span>${(orderDetails.subtotal || 0).toFixed(2)}</span>
                 </div>
 
                 <div className="summary-row">
                   <span>Tax (8%)</span>
-                  <span>${orderDetails.tax.toFixed(2)}</span>
+                  <span>${(orderDetails.tax || 0).toFixed(2)}</span>
                 </div>
 
-                {orderDetails.discount > 0 && (
+                {(orderDetails.discount || 0) > 0 && (
                   <div className="summary-row discount">
                     <span>Discount</span>
-                    <span>-${orderDetails.discount.toFixed(2)}</span>
+                    <span>-${(orderDetails.discount || 0).toFixed(2)}</span>
                   </div>
                 )}
 
@@ -218,7 +261,7 @@ const OrderConfirmationPage = () => {
 
                 <div className="summary-row total">
                   <span>Total</span>
-                  <span>${orderDetails.total.toFixed(2)}</span>
+                  <span>${(orderDetails.total || 0).toFixed(2)}</span>
                 </div>
               </div>
             </section>

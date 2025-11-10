@@ -12,6 +12,7 @@ import OrderConfirmationPage from './pages/checkout/OrderConfirmationPage'
 import { useEffect, useState } from 'react'
 import ProductsPage from './pages/products/ProductPage'
 import OrdersPage from './pages/orders/OrdersPage'
+import { OrderProvider } from './context/OrderContext'
 
 function App() {
    const [forceRender, setForceRender] = useState(false)
@@ -22,23 +23,25 @@ function App() {
   }, [])
 
   return (
-     <Router>
-      <div className={`app-container ${forceRender ? "rendered" : ""}`}>
-        <Routes>
-          <Route path="/home" element={<Homepage />} />
-          <Route path="/wishlist" element={<WishlistPage />} />
-          <Route path="/cart" element={<CartPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/order-success" element={<OrderConfirmationPage />} />
-          <Route path="/orders" element={<OrdersPage />} />
-          <Route path="/" element={<Signup />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/forgotpassword" element={<ForgotPassword />} />
-          <Route path="/resetPassword/:token" element={<ResetPassword />} />
-          <Route path='/products' element={<ProductsPage />} />
-        </Routes>
-      </div>
-    </Router>
+    <OrderProvider>
+      <Router>
+        <div className={`app-container ${forceRender ? "rendered" : ""}`}>
+          <Routes>
+            <Route path="/home" element={<Homepage />} />
+            <Route path="/wishlist" element={<WishlistPage />} />
+            <Route path="/cart" element={<CartPage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/order-success" element={<OrderConfirmationPage />} />
+            <Route path="/orders" element={<OrdersPage />} />
+            <Route path="/" element={<Signup />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/forgotpassword" element={<ForgotPassword />} />
+            <Route path="/resetPassword/:token" element={<ResetPassword />} />
+            <Route path='/products' element={<ProductsPage />} />
+          </Routes>
+        </div>
+      </Router>
+    </OrderProvider>
   )
 }
 

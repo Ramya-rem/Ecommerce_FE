@@ -4,94 +4,18 @@ import { FaArrowLeft, FaEdit, FaPlus, FaCheck, FaMapMarkerAlt, FaPercent } from 
 import Header from "../../components/Header"
 import Footer from "../../components/Footer"
 import UPIPayment from "../../components/UPIPayment"
+import StripePayment from "../../components/StripePayment"
+import { useOrders } from "../../context/OrderContext"
 import "./CheckoutPage.css"
 import api from "../../utils/api"
 
 const CheckoutPage = () => {
   const navigate = useNavigate()
+  const { addOrder } = useOrders()
+
   const [cartItems, setCartItems] = useState([])
   const [wishlistItemCount, setWishlistItemCount] = useState(0)
   const [loading, setLoading] = useState(false)
-  const [orderSummary, setOrderSummary] = useState({
-    subtotal: 0,
-    tax: 0,
-    shipping: "FREE",
-    total: 0
-  })
-
-  // Fetch cart data from backend
-  useEffect(() => {
-    const fetchCart = async () => {
-      setLoading(true)
-      try {
-        const response = await api.get("/getUsercart")
-        if (response.data.success) {
-          setCartItems(response.data.cartItems)
-        }
-      } catch (error) {
-        console.error("Error fetching cart", error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchCart()
-  }, [])
-
-  // Fetch wishlist count from backend
-  useEffect(() => {
-    const fetchWishlistCount = async () => {
-      try {
-        const response = await api.get("/getUserWishlist")
-        if (response.data.success) {
-          setWishlistItemCount(response.data.wishlistCount || 0)
-        }
-      } catch (error) {
-        console.error("Error fetching wishlist count:", error)
-      }
-    }
-
-    fetchWishlistCount()
-  }, [])
-
-  // Fetch order summary from backend
-  const fetchOrderSummary = async () => {
-    try {
-      const response = await api.get("/fetchOrderSummary")
-      if (response.status === 200) {
-        setOrderSummary({
-          subtotal: Number(response.data.subtotal) || 0,
-          tax: Number(response.data.tax) || 0,
-          shipping: response.data.shipping || "FREE",
-          total: Number(response.data.total) || 0
-        })
-      }
-    } catch (error) {
-      console.error("Error fetching order summary:", error)
-      // Reset to default values if API fails
-      setOrderSummary({
-        subtotal: 0,
-        tax: 0,
-        shipping: "FREE",
-        total: 0
-      })
-    }
-  }
-
-  // Fetch order summary when cart items change
-  useEffect(() => {
-    if (cartItems.length > 0) {
-      fetchOrderSummary()
-    } else {
-      setOrderSummary({
-        subtotal: 0,
-        tax: 0,
-        shipping: "FREE",
-        total: 0
-      })
-    }
-  }, [cartItems])
-
   const [addresses, setAddresses] = useState([
     {
       id: 1,
@@ -122,6 +46,40 @@ const CheckoutPage = () => {
   const [couponCode, setCouponCode] = useState("")
   const [couponError, setCouponError] = useState("")
   const [showUPIPayment, setShowUPIPayment] = useState(false)
+  const [showStripePayment, setShowStripePayment] = useState(false) // New state for Stripe payment
+
+  // Fetch cart data from backend
+  useEffect(() => {
+    const fetchCart = async () => {
+      setLoading(true)
+      try {
+        const response = await api.get("/getUsercart")
+        if (response.data.success) {
+          setCartItems(response.data.cartItems)
+        }
+      } catch (error) {
+        console.error("Error fetching cart", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchCart()
+  }, [])
+
+  // Fetch wishlist count from backend
+  useEffect(() => {
+    const fetchWishlistCount = async () => {
+      try {
+        const response = await api.get("/getUserWishlist")
+        if (response.data.success) {
+          setWishlistItemCount(response.data.wishlistCount || 0)
+        }
+      } catch (error) {
+        console.error("Error fetching wishlist count:", error)
+      }
+    }
+    fetchWishlistCount()
+  }, [])
 
   // Available coupons (in a real app, this would come from an API)
   const availableCoupons = [
@@ -130,10 +88,18 @@ const CheckoutPage = () => {
     { code: "NEWUSER", discount: 15, type: "percentage", minOrder: 50 },
   ]
 
+  const calculateSubtotal = () => {
+    return cartItems.reduce((total, item) => total + item.price * item.quantity, 0)
+  }
+
+  const calculateTax = () => {
+    return calculateSubtotal() * 0.08 // 8% tax
+  }
+
   const calculateDiscount = () => {
     if (!appliedCoupon) return 0
 
-    const subtotal = orderSummary.subtotal
+    const subtotal = calculateSubtotal()
     if (subtotal < appliedCoupon.minOrder) return 0
 
     if (appliedCoupon.type === "percentage") {
@@ -144,8 +110,7 @@ const CheckoutPage = () => {
   }
 
   const calculateTotal = () => {
-    const discount = calculateDiscount()
-    return orderSummary.total - discount
+    return calculateSubtotal() + calculateTax() - calculateDiscount()
   }
 
   const handleAddressSelect = (address) => {
@@ -218,7 +183,7 @@ const CheckoutPage = () => {
       return
     }
 
-    if (orderSummary.subtotal < coupon.minOrder) {
+    if (calculateSubtotal() < coupon.minOrder) {
       setCouponError(`Minimum order amount of $${coupon.minOrder.toFixed(2)} required`)
       return
     }
@@ -234,6 +199,83 @@ const CheckoutPage = () => {
     setCouponError("")
   }
 
+  const createOrderData = () => {
+    return {
+      items: cartItems.map((item) => ({
+        id: item.id,
+        name: item.productName,
+        price: item.price,
+        quantity: item.quantity,
+        image: item.image,
+      })),
+      subtotal: calculateSubtotal(),
+      tax: calculateTax(),
+      discount: calculateDiscount(),
+      total: calculateTotal(),
+      paymentMethod: paymentMethod === "upi" ? "UPI" : paymentMethod === "card" ? "Card" : "Cash on Delivery",
+      deliveryAddress: {
+        name: selectedAddress.name,
+        phone: selectedAddress.phone,
+        address: `${selectedAddress.address}, ${selectedAddress.city}, ${selectedAddress.state} ${selectedAddress.zipCode}`,
+      },
+      estimatedDelivery: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days from now
+      appliedCoupon: appliedCoupon,
+    }
+  }
+
+  // Place order via API
+  const placeOrder = async (paymentMethodValue, paymentData = null) => {
+    try {
+      const deliveryAddress = {
+        fullName: selectedAddress.name,
+        phoneNumber: selectedAddress.phone,
+        addressLine: `${selectedAddress.address}, ${selectedAddress.city}, ${selectedAddress.state} ${selectedAddress.zipCode}`,
+      }
+
+      const orderPayload = {
+        deliveryAddress,
+        editAddress: true,
+        paymentMethod: paymentMethodValue, // "cod", "card", or "upi"
+      }
+
+      // Add payment data for card payments
+      if (paymentMethodValue === "card" && paymentData) {
+        orderPayload.paymentData = {
+          cardLast4: paymentData.cardLast4,
+          cardholderName: paymentData.cardholderName,
+          transactionId: paymentData.transactionId,
+        }
+      }
+
+      const response = await api.post("/place-order", orderPayload)
+
+      if (response.status === 201) {
+        return {
+          orderId: response.data.orderId,
+          totalAmount: response.data.totalAmount,
+        }
+      }
+      throw new Error("Failed to place order")
+    } catch (error) {
+      console.error("Error placing order:", error)
+      const errorMessage = error.response?.data?.message || "Failed to place order. Please try again."
+      throw new Error(errorMessage)
+    }
+  }
+
+  const clearCart = async () => {
+    try {
+      // Clear cart via API
+      await api.delete("/deletecart?clearcart=true")
+      // Clear local cart state
+      setCartItems([])
+    } catch (error) {
+      console.error("Error clearing cart:", error)
+      // Still clear local state even if API call fails
+      setCartItems([])
+    }
+  }
+
   const handlePlaceOrder = async () => {
     if (!selectedAddress) {
       alert("Please select a delivery address")
@@ -247,93 +289,147 @@ const CheckoutPage = () => {
 
     if (paymentMethod === "upi") {
       setShowUPIPayment(true)
+    } else if (paymentMethod === "card") {
+      // Add card payment option
+      setShowStripePayment(true)
     } else {
-      // Cash on Delivery
+      // Cash on Delivery - place order immediately
       try {
         setLoading(true)
         
-        const deliveryAddress = {
-          fullName: selectedAddress.name,
-          phoneNumber: selectedAddress.phone,
-          addressLine: `${selectedAddress.address}, ${selectedAddress.city}, ${selectedAddress.state} ${selectedAddress.zipCode}`
-        }
-
-        const orderData = {
-          deliveryAddress,
-          editAddress: true // This will update the user's saved address
-        }
-
-        const response = await api.post("/place-order", orderData)
+        // Place order via API
+        const orderResponse = await placeOrder("cod")
         
-        if (response.status === 201) {
-          // Store cart items and address for order confirmation page
-          localStorage.setItem("cartItems", JSON.stringify(cartItems))
-          localStorage.setItem("selectedAddress", JSON.stringify(selectedAddress))
-          
-          alert("Order placed successfully! Thank you for your purchase.")
-          navigate("/order-success", { 
-            state: { 
-              orderId: response.data.orderId,
-              totalAmount: response.data.totalAmount 
+        // Also add to OrderContext for local display
+        const orderData = createOrderData()
+        const newOrder = await addOrder({
+          ...orderData,
+          id: orderResponse.orderId,
+        })
+
+        // Cart is automatically cleared by API, but ensure local state is cleared
+        setCartItems([])
+
+        alert("Order placed successfully! Thank you for your purchase.")
+        navigate("/order-success", { 
+          state: { 
+            orderId: orderResponse.orderId,
+            totalAmount: orderResponse.totalAmount,
+            orderData: {
+              ...orderData,
+              id: orderResponse.orderId,
+              total: orderResponse.totalAmount,
             }
-          })
-        }
+          } 
+        })
       } catch (error) {
         console.error("Error placing order:", error)
-        const errorMessage = error.response?.data?.message || "Failed to place order. Please try again."
-        alert(errorMessage)
+        alert(error.message || "Failed to place order. Please try again.")
       } finally {
         setLoading(false)
       }
     }
   }
 
+  const handleStripeSuccess = async (paymentData) => {
+    console.log("Stripe payment successful:", paymentData)
+    setShowStripePayment(false)
+
+    try {
+      setLoading(true)
+      
+      // Place order via API
+      const orderResponse = await placeOrder("card", paymentData)
+      
+      // Also add to OrderContext for local display
+      const orderData = {
+        ...createOrderData(),
+        paymentData: paymentData,
+        transactionId: paymentData.transactionId,
+      }
+      const newOrder = await addOrder({
+        ...orderData,
+        id: orderResponse.orderId,
+      })
+
+      // Cart is automatically cleared by API, but ensure local state is cleared
+      setCartItems([])
+
+      localStorage.setItem("paymentData", JSON.stringify(paymentData))
+      navigate("/order-success", { 
+        state: { 
+          orderId: orderResponse.orderId,
+          totalAmount: orderResponse.totalAmount,
+          orderData: {
+            ...orderData,
+            id: orderResponse.orderId,
+            total: orderResponse.totalAmount,
+          }
+        } 
+      })
+    } catch (error) {
+      console.error("Error creating order after payment:", error)
+      alert(error.message || "Payment successful but failed to create order. Please contact support.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleStripeFailure = (error) => {
+    console.error("Stripe payment failed:", error)
+    alert(`Payment failed: ${error}`)
+  }
+
+  const handleStripeClose = () => {
+    setShowStripePayment(false)
+  }
+
   const handleUPISuccess = async (paymentData) => {
-    console.log("Payment successful:", paymentData)
+    console.log("UPI payment successful:", paymentData)
     setShowUPIPayment(false)
 
     try {
       setLoading(true)
       
-      const deliveryAddress = {
-        fullName: selectedAddress.name,
-        phoneNumber: selectedAddress.phone,
-        addressLine: `${selectedAddress.address}, ${selectedAddress.city}, ${selectedAddress.state} ${selectedAddress.zipCode}`
-      }
-
-      const orderData = {
-        deliveryAddress,
-        editAddress: true,
-        paymentMethod: "upi",
-        paymentData: paymentData
-      }
-
-      const response = await api.post("/place-order", orderData)
+      // Place order via API
+      const orderResponse = await placeOrder("upi", paymentData)
       
-      if (response.status === 201) {
-        // Store cart items, address, and payment data for order confirmation page
-        localStorage.setItem("cartItems", JSON.stringify(cartItems))
-        localStorage.setItem("selectedAddress", JSON.stringify(selectedAddress))
-        localStorage.setItem("paymentData", JSON.stringify(paymentData))
-        
-        navigate("/order-success", { 
-          state: { 
-            orderId: response.data.orderId,
-            totalAmount: response.data.totalAmount 
-          }
-        })
+      // Also add to OrderContext for local display
+      const orderData = {
+        ...createOrderData(),
+        paymentData: paymentData,
+        transactionId: paymentData.transactionId,
       }
+      const newOrder = await addOrder({
+        ...orderData,
+        id: orderResponse.orderId,
+      })
+
+      // Cart is automatically cleared by API, but ensure local state is cleared
+      setCartItems([])
+
+      localStorage.setItem("paymentData", JSON.stringify(paymentData))
+      navigate("/order-success", { 
+        state: { 
+          orderId: orderResponse.orderId,
+          totalAmount: orderResponse.totalAmount,
+          orderData: {
+            ...orderData,
+            id: orderResponse.orderId,
+            total: orderResponse.totalAmount,
+          }
+        } 
+      })
     } catch (error) {
-      console.error("Error placing order after UPI payment:", error)
-      const errorMessage = error.response?.data?.message || "Payment successful but order placement failed. Please contact support."
-      alert(errorMessage)
+      console.error("Error creating order after payment:", error)
+      alert(error.message || "Payment successful but failed to create order. Please contact support.")
     } finally {
       setLoading(false)
     }
   }
 
   const handleUPIFailure = (error) => {
-    console.error("Payment failed:", error)
+    console.error("UPI payment failed:", error)
     alert(`Payment failed: ${error}`)
   }
 
@@ -376,7 +472,10 @@ const CheckoutPage = () => {
 
   return (
     <div className="checkout-page">
-      <Header cartItemCount={cartItems.reduce((total, item) => total + item.quantity, 0)} wishlistItemCount={wishlistItemCount} />
+      <Header
+        cartItemCount={cartItems.reduce((total, item) => total + item.quantity, 0)}
+        wishlistItemCount={wishlistItemCount}
+      />
 
       <div className="checkout-container">
         <div className="checkout-header">
@@ -551,7 +650,7 @@ const CheckoutPage = () => {
                 {cartItems.map((item) => (
                   <div className="order-item" key={item.id}>
                     <div className="item-image-container">
-                      <img src={`${import.meta.env.VITE_BASE_URL}${item.image}`} alt={item.productName} className="item-image" />
+                      <img src={`http://localhost:7777${item.image}`} alt={item.productName} className="item-image" />
                     </div>
                     <div className="item-details">
                       <h3 className="item-name">{item.productName}</h3>
@@ -596,6 +695,17 @@ const CheckoutPage = () => {
                   />
                   <label htmlFor="upi">UPI Payment</label>
                 </div>
+                <div className="payment-option">
+                  <input
+                    type="radio"
+                    id="card"
+                    name="payment"
+                    value="card"
+                    checked={paymentMethod === "card"}
+                    onChange={() => setPaymentMethod("card")}
+                  />
+                  <label htmlFor="card">Credit/Debit Card</label>
+                </div>
               </div>
 
               {paymentMethod === "upi" && (
@@ -608,6 +718,21 @@ const CheckoutPage = () => {
                       <li>✅ Secure and encrypted transactions</li>
                       <li>✅ No need to share card details</li>
                       <li>✅ Available 24/7</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {paymentMethod === "card" && (
+                <div className="upi-details">
+                  <p>You will be able to pay using your credit or debit card securely via Stripe.</p>
+                  <div className="upi-benefits">
+                    <h4>Benefits of Card Payment:</h4>
+                    <ul>
+                      <li>✅ Instant payment confirmation</li>
+                      <li>✅ Secure and encrypted transactions</li>
+                      <li>✅ Support for all major cards (Visa, Mastercard, Amex)</li>
+                      <li>✅ Fraud protection</li>
                     </ul>
                   </div>
                 </div>
@@ -662,12 +787,12 @@ const CheckoutPage = () => {
 
               <div className="summary-row">
                 <span>Subtotal ({cartItems.reduce((total, item) => total + item.quantity, 0)} items)</span>
-                <span>${orderSummary.subtotal.toFixed(2)}</span>
+                <span>${calculateSubtotal().toFixed(2)}</span>
               </div>
 
               <div className="summary-row">
                 <span>Tax (8%)</span>
-                <span>${orderSummary.tax.toFixed(2)}</span>
+                <span>${calculateTax().toFixed(2)}</span>
               </div>
 
               {appliedCoupon && (
@@ -679,7 +804,7 @@ const CheckoutPage = () => {
 
               <div className="summary-row shipping">
                 <span>Shipping</span>
-                <span className="free">{orderSummary.shipping}</span>
+                <span className="free">FREE</span>
               </div>
 
               <div className="summary-divider"></div>
@@ -689,12 +814,8 @@ const CheckoutPage = () => {
                 <span>${calculateTotal().toFixed(2)}</span>
               </div>
 
-              <button 
-                className="place-order-btn" 
-                onClick={handlePlaceOrder} 
-                disabled={!selectedAddress || loading}
-              >
-                {loading ? "Processing..." : (paymentMethod === "upi" ? "Pay Now" : "Place Order")}
+              <button className="place-order-btn" onClick={handlePlaceOrder} disabled={!selectedAddress}>
+                {paymentMethod === "upi" ? "Pay Now" : paymentMethod === "card" ? "Pay Now" : "Place Order"}
               </button>
             </div>
           </div>
@@ -709,6 +830,16 @@ const CheckoutPage = () => {
           onSuccess={handleUPISuccess}
           onFailure={handleUPIFailure}
           onClose={handleUPIClose}
+        />
+      )}
+
+      {showStripePayment && (
+        <StripePayment
+          amount={calculateTotal()}
+          orderId={`ORD${Date.now()}`}
+          onSuccess={handleStripeSuccess}
+          onFailure={handleStripeFailure}
+          onClose={handleStripeClose}
         />
       )}
 

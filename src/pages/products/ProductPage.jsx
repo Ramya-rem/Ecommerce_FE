@@ -10,6 +10,7 @@ import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import "./productPage.css";
 import api from "../../utils/api";
+import { fetchAllProducts } from "../../utils/ProductApi";
 
 const ProductsPage = () => {
   const [products, setProducts] = useState([]);
@@ -23,13 +24,28 @@ const ProductsPage = () => {
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [cartLoading, setCartLoading] = useState(false);
+  const [productsLoading, setProductsLoading] = useState(true);
 
-  // ✅ Fetch Products from Backend and Map Data
+  // Map frontend category names to API category values
+  const getCategoryFilter = (frontendCategory) => {
+    const categoryMap = {
+      "All": null,
+      "Cakes": "cake",
+      "Desserts": "desert",
+      "Drinks": "drink"
+    };
+    return categoryMap[frontendCategory];
+  };
+
+  // ✅ Fetch Products from Backend with Category Filter
   useEffect(() => {
     const fetchProducts = async () => {
+      setProductsLoading(true);
       try {
-        const response = await api.get("/getallProduct");
-        const mappedProducts = response.data.map((p) => ({
+        const categoryFilter = getCategoryFilter(selectedCategory);
+        const productsData = await fetchAllProducts(categoryFilter);
+        
+        const mappedProducts = productsData.map((p) => ({
           id: p._id,
           name: p.productName,
           price: p.price,
@@ -42,10 +58,13 @@ const ProductsPage = () => {
         setProducts(mappedProducts);
       } catch (error) {
         console.error("Error fetching products", error);
+        setProducts([]);
+      } finally {
+        setProductsLoading(false);
       }
     };
     fetchProducts();
-  }, []);
+  }, [selectedCategory]);
 
   // ✅ Fetch User's Wishlist from Backend
   useEffect(() => {
@@ -77,17 +96,11 @@ const ProductsPage = () => {
     fetchCart();
   }, []);
 
-  // ✅ Apply Filters & Sorting
+  // ✅ Apply Filters & Sorting (Backend handles category filtering, only apply price and sort here)
   useEffect(() => {
     let result = [...products];
 
-    if (selectedCategory !== "All") {
-      result = result.filter(
-        (product) =>
-          product.category?.toLowerCase() === selectedCategory.toLowerCase()
-      );
-    }
-
+    // Backend already filters by category, so we only need to filter by price range
     result = result.filter(
       (product) =>
         product.price >= priceRange.min && product.price <= priceRange.max
@@ -113,7 +126,7 @@ const ProductsPage = () => {
     }
 
     setFilteredProducts(result);
-  }, [products, selectedCategory, sortBy, priceRange]);
+  }, [products, sortBy, priceRange]);
 
   const addToCart = async (product) => {
     setCartLoading(true);
@@ -302,7 +315,7 @@ const ProductsPage = () => {
                 <button
                   onClick={() => {
                     setSelectedCategory("All");
-                    setPriceRange({ min: 0, max: 50 });
+                    setPriceRange({ min: 0, max: 1000 });
                     setSortBy("featured");
                   }}
                 >

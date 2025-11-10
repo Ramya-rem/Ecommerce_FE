@@ -1,83 +1,71 @@
-import { FaHeart, FaShoppingCart } from "react-icons/fa";
-import "../styles/FeaturedDesserts.css";
-import { useEffect, useState } from "react";
-import api from "../utils/api";
+"use client"
+import { useWishlist } from "../hooks/useWishlist"
+import { useState, useEffect } from "react"
+import ProductCard from "./ProductCard"
+import { fetchAllProducts } from "../utils/productApi"
+import "../styles/FeaturedDesserts.css"
 
 function FeaturedDesserts({ addToCart, addToWishlist, wishlistItems }) {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [cartLoading, setCartLoading] = useState(false);
+  const { isInWishlist, toggleWishlist, loading } = useWishlist()
+  const [products, setProducts] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [actionLoading, setActionLoading] = useState(null)
 
   useEffect(() => {
-    const fetchDesserts = async () => {
+    const loadProducts = async () => {
+      setIsLoading(true)
       try {
-        const res = await api.get("/getallProduct?category=desserts"); // Adjust if your endpoint is different
-        setProducts(res.data);
-      } catch (err) {
-        console.error("Failed to fetch desserts", err);
+        const fetchedProducts = await fetchAllProducts("desert")
+        setProducts(fetchedProducts.slice(0, 6)) // Show first 6 products
+      } catch (error) {
+        console.error("Error loading products:", error)
+        setProducts([])
+      } finally {
+        setIsLoading(false)
       }
-    };
-
-    fetchDesserts();
-  }, []);
-
-  const isInWishlist = (productId) => {
-    return wishlistItems.some((item) => item.id === productId);
-  };
+    }
+    loadProducts()
+  }, [])
 
   const handleWishlistToggle = async (product) => {
-    setLoading(true);
+    setActionLoading(product._id)
     try {
-      const isAlreadyInWishlist = wishlistItems.some(
-        (item) => item.id === product._id
-      );
-
-      if (isAlreadyInWishlist) {
-        // Remove from wishlist
-        const response = await api.delete("/delete-wishlist", {
-          data: { productId: product._id }
-        });
-        
-        if (response.status === 200) {
-          addToWishlist(wishlistItems.filter((item) => item.id !== product._id));
-          alert(`${product.productName} removed from wishlist!`);
-        }
+      const result = await toggleWishlist(product)
+      if (result.success) {
+        // Success message is handled by the hook
       } else {
-        // Add to wishlist
-        const response = await api.post("/addTo-wishlist", {
-          productId: product._id
-        });
-        
-        if (response.status === 200) {
-          addToWishlist([...wishlistItems, response.data.addedProduct]);
-          alert(`${product.productName} added to wishlist!`);
-        }
+        alert(`Error: ${result.message}`)
       }
-    } catch (error) {
-      console.error("Wishlist operation failed:", error);
-      if (error.response?.data?.message) {
-        alert(error.response.data.message);
-      } else {
-        alert("Failed to update wishlist. Please try again.");
-      }
+    } catch (err) {
+      alert("Failed to update wishlist")
     } finally {
-      setLoading(false);
+      setActionLoading(null)
     }
-  };
+  }
 
-  const handleAddToCart = async (product) => {
-    setCartLoading(true);
-    try {
-      // Call parent's addToCart function instead of making direct API call
-      await addToCart(product);
-      // The parent function will handle the API call and show appropriate messages
-    } catch (error) {
-      console.error("Add to cart failed:", error);
-      // Error handling is done in the parent component
-    } finally {
-      setCartLoading(false);
-    }
-  };
+  if (isLoading) {
+    return (
+      <section className="featured-desserts">
+        <div className="featured-container">
+          <h2>Featured Desserts</h2>
+          <p style={{ textAlign: "center", padding: "40px 20px", color: "#666" }}>Loading desserts...</p>
+        </div>
+      </section>
+    )
+  }
+
+  if (products.length === 0) {
+    return (
+      <section className="featured-desserts">
+        <div className="featured-container">
+          <h2>Featured Desserts</h2>
+          <p style={{ textAlign: "center", padding: "40px 20px", color: "#666" }}>
+            No desserts available at the moment.
+          </p>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="featured-desserts">
@@ -85,56 +73,18 @@ function FeaturedDesserts({ addToCart, addToWishlist, wishlistItems }) {
         <h2>Featured Desserts</h2>
         <div className="products-grid">
           {products.map((product) => (
-            <div className="product-card" key={product._id}>
-              <div className="product-image-container">
-                <img
-                  src={`${import.meta.env.VITE_BASE_URL}${product.image}`}
-                  alt={product.productName}
-                  className="product-image"
-                />
-                {product.badge && (
-                  <span className="product-badge">{product.badge}</span>
-                )}
-                <button
-                  className={`wishlist-button ${
-                    isInWishlist(product._id) ? "active" : ""
-                  } ${loading ? "loading" : ""}`}
-                  onClick={() => handleWishlistToggle(product)}
-                  disabled={loading}
-                  title={
-                    isInWishlist(product._id)
-                      ? "Remove from wishlist"
-                      : "Add to wishlist"
-                  }
-                >
-                  <FaHeart />
-                </button>
-              </div>
-              <div className="product-details">
-                <div className="product-header">
-                  <h3>{product.productName}</h3>
-                </div>
-                <p className="product-description">{product.description}</p>
-                <div className="product-footer">
-                  <span className="product-price">
-                    ${product.price.toFixed(2)}
-                  </span>
-                  <button
-                    className="add-to-cart-btn"
-                    onClick={() => handleAddToCart(product)}
-                    disabled={cartLoading}
-                  >
-                    <FaShoppingCart />
-                    {cartLoading ? "Adding..." : "Add to Cart"}
-                  </button>
-                </div>
-              </div>
-            </div>
+            <ProductCard
+              key={product._id}
+              product={product}
+              onAddToCart={addToCart}
+              onAddToWishlist={addToWishlist}
+              isInWishlist={wishlistItems?.some((item) => item._id === product._id) || false}
+            />
           ))}
         </div>
       </div>
     </section>
-  );
+  )
 }
 
-export default FeaturedDesserts;
+export default FeaturedDesserts
