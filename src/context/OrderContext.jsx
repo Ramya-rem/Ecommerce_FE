@@ -67,7 +67,7 @@ export const OrderProvider = ({ children }) => {
         address: "456 Oak Ave, City, State 12345",
         phone: "+1 234-567-8901",
       },
-      paymentMethod: "UPI",
+      paymentMethod: "Card",
       estimatedDelivery: "2024-01-22T16:00:00.000Z",
       trackingNumber: "TRK123456790",
     },

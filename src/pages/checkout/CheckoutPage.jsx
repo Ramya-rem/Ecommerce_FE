@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom"
 import { FaArrowLeft, FaEdit, FaPlus, FaCheck, FaMapMarkerAlt, FaPercent } from "react-icons/fa"
 import Header from "../../components/Header"
 import Footer from "../../components/Footer"
-import UPIPayment from "../../components/UPIPayment"
 import StripePayment from "../../components/StripePayment"
 import { useOrders } from "../../context/OrderContext"
 import "./CheckoutPage.css"
@@ -45,8 +44,7 @@ const CheckoutPage = () => {
   const [appliedCoupon, setAppliedCoupon] = useState(null)
   const [couponCode, setCouponCode] = useState("")
   const [couponError, setCouponError] = useState("")
-  const [showUPIPayment, setShowUPIPayment] = useState(false)
-  const [showStripePayment, setShowStripePayment] = useState(false) // New state for Stripe payment
+  const [showStripePayment, setShowStripePayment] = useState(false)
 
   // Fetch cart data from backend
   useEffect(() => {
@@ -212,7 +210,7 @@ const CheckoutPage = () => {
       tax: calculateTax(),
       discount: calculateDiscount(),
       total: calculateTotal(),
-      paymentMethod: paymentMethod === "upi" ? "UPI" : paymentMethod === "card" ? "Card" : "Cash on Delivery",
+      paymentMethod: paymentMethod === "card" ? "Card" : "Cash on Delivery",
       deliveryAddress: {
         name: selectedAddress.name,
         phone: selectedAddress.phone,
@@ -235,7 +233,7 @@ const CheckoutPage = () => {
       const orderPayload = {
         deliveryAddress,
         editAddress: true,
-        paymentMethod: paymentMethodValue, // "cod", "card", or "upi"
+        paymentMethod: paymentMethodValue, // "cod" or "card"
       }
 
       // Add payment data for card payments
@@ -287,10 +285,7 @@ const CheckoutPage = () => {
       return
     }
 
-    if (paymentMethod === "upi") {
-      setShowUPIPayment(true)
-    } else if (paymentMethod === "card") {
-      // Add card payment option
+    if (paymentMethod === "card") {
       setShowStripePayment(true)
     } else {
       // Cash on Delivery - place order immediately
@@ -382,59 +377,6 @@ const CheckoutPage = () => {
 
   const handleStripeClose = () => {
     setShowStripePayment(false)
-  }
-
-  const handleUPISuccess = async (paymentData) => {
-    console.log("UPI payment successful:", paymentData)
-    setShowUPIPayment(false)
-
-    try {
-      setLoading(true)
-      
-      // Place order via API
-      const orderResponse = await placeOrder("upi", paymentData)
-      
-      // Also add to OrderContext for local display
-      const orderData = {
-        ...createOrderData(),
-        paymentData: paymentData,
-        transactionId: paymentData.transactionId,
-      }
-      const newOrder = await addOrder({
-        ...orderData,
-        id: orderResponse.orderId,
-      })
-
-      // Cart is automatically cleared by API, but ensure local state is cleared
-      setCartItems([])
-
-      localStorage.setItem("paymentData", JSON.stringify(paymentData))
-      navigate("/order-success", { 
-        state: { 
-          orderId: orderResponse.orderId,
-          totalAmount: orderResponse.totalAmount,
-          orderData: {
-            ...orderData,
-            id: orderResponse.orderId,
-            total: orderResponse.totalAmount,
-          }
-        } 
-      })
-    } catch (error) {
-      console.error("Error creating order after payment:", error)
-      alert(error.message || "Payment successful but failed to create order. Please contact support.")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleUPIFailure = (error) => {
-    console.error("UPI payment failed:", error)
-    alert(`Payment failed: ${error}`)
-  }
-
-  const handleUPIClose = () => {
-    setShowUPIPayment(false)
   }
 
   if (loading) {
@@ -687,17 +629,6 @@ const CheckoutPage = () => {
                 <div className="payment-option">
                   <input
                     type="radio"
-                    id="upi"
-                    name="payment"
-                    value="upi"
-                    checked={paymentMethod === "upi"}
-                    onChange={() => setPaymentMethod("upi")}
-                  />
-                  <label htmlFor="upi">UPI Payment</label>
-                </div>
-                <div className="payment-option">
-                  <input
-                    type="radio"
                     id="card"
                     name="payment"
                     value="card"
@@ -708,25 +639,10 @@ const CheckoutPage = () => {
                 </div>
               </div>
 
-              {paymentMethod === "upi" && (
-                <div className="upi-details">
-                  <p>You will be able to pay using any UPI app like PhonePe, Paytm, Google Pay, or BHIM.</p>
-                  <div className="upi-benefits">
-                    <h4>Benefits of UPI Payment:</h4>
-                    <ul>
-                      <li>✅ Instant payment confirmation</li>
-                      <li>✅ Secure and encrypted transactions</li>
-                      <li>✅ No need to share card details</li>
-                      <li>✅ Available 24/7</li>
-                    </ul>
-                  </div>
-                </div>
-              )}
-
               {paymentMethod === "card" && (
-                <div className="upi-details">
+                <div className="payment-details">
                   <p>You will be able to pay using your credit or debit card securely via Stripe.</p>
-                  <div className="upi-benefits">
+                  <div className="payment-benefits">
                     <h4>Benefits of Card Payment:</h4>
                     <ul>
                       <li>✅ Instant payment confirmation</li>
@@ -815,23 +731,12 @@ const CheckoutPage = () => {
               </div>
 
               <button className="place-order-btn" onClick={handlePlaceOrder} disabled={!selectedAddress}>
-                {paymentMethod === "upi" ? "Pay Now" : paymentMethod === "card" ? "Pay Now" : "Place Order"}
+                {paymentMethod === "card" ? "Pay Now" : "Place Order"}
               </button>
             </div>
           </div>
         </div>
       </div>
-
-      {/* UPI Payment Modal */}
-      {showUPIPayment && (
-        <UPIPayment
-          amount={calculateTotal()}
-          orderId={`ORD${Date.now()}`}
-          onSuccess={handleUPISuccess}
-          onFailure={handleUPIFailure}
-          onClose={handleUPIClose}
-        />
-      )}
 
       {showStripePayment && (
         <StripePayment
