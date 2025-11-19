@@ -111,8 +111,67 @@ const CheckoutPage = () => {
     return calculateSubtotal() + calculateTax() - calculateDiscount()
   }
 
+  const persistDeliveryAddress = async (address) => {
+    if (!address) return
+    try {
+      const payload = {
+        fullName: address.name,
+        phoneNumber: address.phone,
+        addressLine: `${address.address}, ${address.city}, ${address.state} ${address.zipCode}`.trim(),
+      }
+      await api.post("/delivery-address", payload)
+    } catch (error) {
+      console.error("Error syncing delivery address:", error)
+    }
+  }
+
+  const parseDeliveryAddressResponse = (deliveryAddress) => {
+    if (!deliveryAddress) return null
+    const addressLine = deliveryAddress.addressLine || ""
+    const parts = addressLine.split(",").map((part) => part.trim())
+    const street = parts[0] || ""
+    const city = parts[1] || ""
+    const stateZip = parts[2] || ""
+    const stateZipParts = stateZip.split(" ").filter(Boolean)
+    const state = stateZipParts[0] || ""
+    const zipCode = stateZipParts.slice(1).join(" ") || ""
+
+    return {
+      id: Date.now(),
+      name: deliveryAddress.fullName || "",
+      phone: deliveryAddress.phoneNumber || "",
+      address: street,
+      city,
+      state,
+      zipCode,
+      isDefault: true,
+    }
+  }
+
+  // Fetch saved delivery address on mount
+  useEffect(() => {
+    const fetchDeliveryAddress = async () => {
+      try {
+        const response = await api.get("/get-deliveryaddress")
+        if (response.data?.deliveryAddress) {
+          const formattedAddress = parseDeliveryAddressResponse(response.data.deliveryAddress)
+          if (formattedAddress) {
+            setAddresses([formattedAddress])
+            setSelectedAddress(formattedAddress)
+          }
+        }
+      } catch (error) {
+        if (error.response?.status !== 404) {
+          console.error("Error fetching delivery address:", error)
+        }
+      }
+    }
+    fetchDeliveryAddress()
+  }, [])
+
   const handleAddressSelect = (address) => {
     setSelectedAddress(address)
+    persistDeliveryAddress(address)
   }
 
   const handleAddNewAddress = () => {
@@ -143,7 +202,7 @@ const CheckoutPage = () => {
     })
   }
 
-  const handleAddressSubmit = (e) => {
+  const handleAddressSubmit = async (e) => {
     e.preventDefault()
 
     if (editingAddress) {
@@ -152,13 +211,16 @@ const CheckoutPage = () => {
         addr.id === editingAddress.id ? { ...newAddress, id: editingAddress.id } : addr,
       )
       setAddresses(updatedAddresses)
-      setSelectedAddress({ ...newAddress, id: editingAddress.id })
+      const updatedSelection = { ...newAddress, id: editingAddress.id }
+      setSelectedAddress(updatedSelection)
+      await persistDeliveryAddress(updatedSelection)
     } else {
       // Add new address
       const newId = addresses.length > 0 ? Math.max(...addresses.map((addr) => addr.id)) + 1 : 1
       const addressToAdd = { ...newAddress, id: newId }
       setAddresses([...addresses, addressToAdd])
       setSelectedAddress(addressToAdd)
+      await persistDeliveryAddress(addressToAdd)
     }
 
     // If this is set as default, update other addresses
