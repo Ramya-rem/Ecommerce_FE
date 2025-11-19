@@ -1,15 +1,12 @@
 "use client"
-import { useWishlist } from "../hooks/useWishlist"
 import { useState, useEffect } from "react"
 import ProductCard from "./ProductCard"
 import { fetchAllProducts } from "../utils/productApi"
 import "../styles/FeaturedDesserts.css"
 
-function FeaturedDesserts({ addToCart, addToWishlist, wishlistItems }) {
-  const { isInWishlist, toggleWishlist, loading } = useWishlist()
+function FeaturedDesserts({ addToCart, onToggleWishlist, wishlistItems = [], isInWishlist }) {
   const [products, setProducts] = useState([])
   const [isLoading, setIsLoading] = useState(true)
-  const [actionLoading, setActionLoading] = useState(null)
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -28,18 +25,16 @@ function FeaturedDesserts({ addToCart, addToWishlist, wishlistItems }) {
   }, [])
 
   const handleWishlistToggle = async (product) => {
-    setActionLoading(product._id)
+    if (!onToggleWishlist) return
     try {
-      const result = await toggleWishlist(product)
-      if (result.success) {
-        // Success message is handled by the hook
-      } else {
+      const result = await onToggleWishlist(product)
+      if (result?.success === false) {
         alert(`Error: ${result.message}`)
       }
     } catch (err) {
+      console.error("Failed to update wishlist:", err)
       alert("Failed to update wishlist")
     } finally {
-      setActionLoading(null)
     }
   }
 
@@ -77,8 +72,14 @@ function FeaturedDesserts({ addToCart, addToWishlist, wishlistItems }) {
               key={product._id}
               product={product}
               onAddToCart={addToCart}
-              onAddToWishlist={addToWishlist}
-              isInWishlist={wishlistItems?.some((item) => item._id === product._id) || false}
+              onAddToWishlist={() => handleWishlistToggle(product)}
+              isInWishlist={
+                typeof isInWishlist === "function"
+                  ? isInWishlist(product._id)
+                  : wishlistItems?.some(
+                      (item) => item._id === product._id || item.id === product._id
+                    ) || false
+              }
             />
           ))}
         </div>

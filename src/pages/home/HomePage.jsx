@@ -11,20 +11,19 @@ import "./home.css"
 
 const HomePage = () => {
   const [cartItems, setCartItems] = useState([])
-  const [wishlistItems, setWishlistItems] = useState([])
-  const { wishlistCount } = useWishlist()
+  const { wishlistItems, wishlistCount, toggleWishlist, isInWishlist } = useWishlist()
 
   const addToCart = (product) => {
     setCartItems([...cartItems, product])
     alert(`${product.name || product.productName} added to cart!`)
   }
 
-  const addToWishlist = (product) => {
-    const isAlreadyInWishlist = wishlistItems.some((item) => item._id === product._id)
-    if (isAlreadyInWishlist) {
-      setWishlistItems(wishlistItems.filter((item) => item._id !== product._id))
-    } else {
-      setWishlistItems([...wishlistItems, product])
+  const handleWishlistToggle = async (product) => {
+    try {
+      return await toggleWishlist(product)
+    } catch (error) {
+      console.error("Failed to toggle wishlist from home page:", error)
+      return { success: false, message: "Unable to update wishlist. Please try again." }
     }
   }
 
@@ -35,7 +34,12 @@ const HomePage = () => {
         <HeroSection />
         <Categories />
         <div className="lower-sections">
-          <FeaturedDesserts addToCart={addToCart} addToWishlist={addToWishlist} wishlistItems={wishlistItems} />
+          <FeaturedDesserts
+            addToCart={addToCart}
+            wishlistItems={wishlistItems}
+            isInWishlist={isInWishlist}
+            onToggleWishlist={handleWishlistToggle}
+          />
           <Offer />
           <CustomerReview />
         </div>

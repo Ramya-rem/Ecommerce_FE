@@ -26,7 +26,7 @@ const ProductCard = ({ product, onAddToCart, onAddToWishlist, isInWishlist }) =>
           onClick={handleAddToWishlist}
           aria-label="Add to wishlist"
         >
-          <FaHeart fill={isInWishlist ? "currentColor" : "none"} />
+          <FaHeart />
         </button>
       </div>
 

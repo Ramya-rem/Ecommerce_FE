@@ -37,8 +37,8 @@
     position: absolute;
     top: 12px;
     right: 12px;
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     border: none;
     border-radius: 50%;
     background: white;
@@ -48,15 +48,18 @@
     justify-content: center;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     transition: all 0.2s ease;
-    color: #e74c3c;
+    color: #ccc;
   }
   
   .wishlist-btn:hover {
     transform: scale(1.1);
+    color: #ff6b6b;
+    background-color: rgba(255, 107, 107, 0.1);
   }
   
   .wishlist-btn.active {
-    background: #ffe6e6;
+    background: rgba(255, 107, 107, 0.1);
+    color: #ff6b6b;
   }
   
   .product-info {
