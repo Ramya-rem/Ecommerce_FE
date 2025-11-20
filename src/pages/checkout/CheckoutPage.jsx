@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { FaArrowLeft, FaEdit, FaPlus, FaCheck, FaMapMarkerAlt, FaPercent } from "react-icons/fa"
 import Header from "../../components/Header"
@@ -8,6 +8,51 @@ import { useOrders } from "../../context/OrderContext"
 import "./CheckoutPage.css"
 import api from "../../utils/api"
 
+const initialAddressState = {
+  name: "",
+  phone: "",
+  address: "",
+  city: "",
+  state: "",
+  zipCode: "",
+  isDefault: false,
+}
+
+const buildAddressLine = ({ address = "", city = "", state = "", zipCode = "" }) => {
+  const segments = [
+    address.trim(),
+    city.trim(),
+    `${state} ${zipCode}`.trim(),
+  ].filter(Boolean)
+  return segments.join(", ")
+}
+
+const splitAddressLine = (addressLine = "") => {
+  const parts = addressLine.split(",").map((part) => part.trim())
+  const street = parts[0] || ""
+  const city = parts[1] || ""
+  const stateZip = parts.slice(2).join(" ").trim()
+  const stateZipParts = stateZip.split(" ").filter(Boolean)
+  const state = stateZipParts[0] || ""
+  const zipCode = stateZipParts.slice(1).join(" ") || ""
+
+  return { street, city, state, zipCode }
+}
+
+const mapApiAddressToUi = (address) => {
+  const { street, city, state, zipCode } = splitAddressLine(address?.addressLine || "")
+  return {
+    id: address?._id || "",
+    name: address?.fullName || "",
+    phone: address?.phoneNumber || "",
+    address: street,
+    city,
+    state,
+    zipCode,
+    isDefault: Boolean(address?.isDefault),
+  }
+}
+
 const CheckoutPage = () => {
   const navigate = useNavigate()
   const { addOrder } = useOrders()
@@ -15,36 +60,67 @@ const CheckoutPage = () => {
   const [cartItems, setCartItems] = useState([])
   const [wishlistItemCount, setWishlistItemCount] = useState(0)
   const [loading, setLoading] = useState(false)
-  const [addresses, setAddresses] = useState([
-    {
-      id: 1,
-      name: "John Doe",
-      phone: "123-456-7890",
-      address: "123 Baker Street",
-      city: "New York",
-      state: "NY",
-      zipCode: "10001",
-      isDefault: true,
-    },
-  ])
+  const [addresses, setAddresses] = useState([])
 
-  const [selectedAddress, setSelectedAddress] = useState(addresses.find((addr) => addr.isDefault) || null)
+  const [selectedAddress, setSelectedAddress] = useState(null)
   const [showAddressForm, setShowAddressForm] = useState(false)
   const [editingAddress, setEditingAddress] = useState(null)
-  const [newAddress, setNewAddress] = useState({
-    name: "",
-    phone: "",
-    address: "",
-    city: "",
-    state: "",
-    zipCode: "",
-    isDefault: false,
-  })
+  const [newAddress, setNewAddress] = useState(initialAddressState)
   const [paymentMethod, setPaymentMethod] = useState("cod")
   const [appliedCoupon, setAppliedCoupon] = useState(null)
   const [couponCode, setCouponCode] = useState("")
   const [couponError, setCouponError] = useState("")
   const [showStripePayment, setShowStripePayment] = useState(false)
+
+  const updateAddressState = useCallback(
+    (addressList = [], preferredId = null) => {
+      const formattedAddresses = addressList.map(mapApiAddressToUi)
+      setAddresses(formattedAddresses)
+
+      const nextSelected =
+        (preferredId && formattedAddresses.find((addr) => addr.id === preferredId)) ||
+        formattedAddresses.find((addr) => addr.isDefault) ||
+        formattedAddresses[0] ||
+        null
+
+      setSelectedAddress(nextSelected)
+    },
+    [],
+  )
+
+  const loadDeliveryAddresses = useCallback(
+    async (preferredId = null) => {
+      try {
+        const response = await api.get("/get-deliveryaddress")
+        updateAddressState(response.data?.deliveryAddress || [], preferredId)
+      } catch (error) {
+        if (error.response?.status !== 404) {
+          console.error("Error fetching delivery address:", error)
+        }
+        updateAddressState([], null)
+      }
+    },
+    [updateAddressState],
+  )
+
+  const persistDeliveryAddress = useCallback(
+    async ({ addressData, addressId, preferredId }) => {
+      const payload = {
+        fullName: addressData.name,
+        phoneNumber: addressData.phone,
+        addressLine: buildAddressLine(addressData),
+        isDefault: Boolean(addressData.isDefault),
+      }
+
+      if (addressId) {
+        payload.addressId = addressId
+      }
+
+      const response = await api.post("/delivery-address", payload)
+      updateAddressState(response.data?.deliveryAddress || [], preferredId)
+    },
+    [updateAddressState],
+  )
 
   // Fetch cart data from backend
   useEffect(() => {
@@ -111,80 +187,21 @@ const CheckoutPage = () => {
     return calculateSubtotal() + calculateTax() - calculateDiscount()
   }
 
-  const persistDeliveryAddress = async (address) => {
-    if (!address) return
-    try {
-      const payload = {
-        fullName: address.name,
-        phoneNumber: address.phone,
-        addressLine: `${address.address}, ${address.city}, ${address.state} ${address.zipCode}`.trim(),
-      }
-      await api.post("/delivery-address", payload)
-    } catch (error) {
-      console.error("Error syncing delivery address:", error)
-    }
-  }
-
-  const parseDeliveryAddressResponse = (deliveryAddress) => {
-    if (!deliveryAddress) return null
-    const addressLine = deliveryAddress.addressLine || ""
-    const parts = addressLine.split(",").map((part) => part.trim())
-    const street = parts[0] || ""
-    const city = parts[1] || ""
-    const stateZip = parts[2] || ""
-    const stateZipParts = stateZip.split(" ").filter(Boolean)
-    const state = stateZipParts[0] || ""
-    const zipCode = stateZipParts.slice(1).join(" ") || ""
-
-    return {
-      id: Date.now(),
-      name: deliveryAddress.fullName || "",
-      phone: deliveryAddress.phoneNumber || "",
-      address: street,
-      city,
-      state,
-      zipCode,
-      isDefault: true,
-    }
-  }
-
-  // Fetch saved delivery address on mount
+  // Fetch saved delivery addresses on mount
   useEffect(() => {
-    const fetchDeliveryAddress = async () => {
-      try {
-        const response = await api.get("/get-deliveryaddress")
-        if (response.data?.deliveryAddress) {
-          const formattedAddress = parseDeliveryAddressResponse(response.data.deliveryAddress)
-          if (formattedAddress) {
-            setAddresses([formattedAddress])
-            setSelectedAddress(formattedAddress)
-          }
-        }
-      } catch (error) {
-        if (error.response?.status !== 404) {
-          console.error("Error fetching delivery address:", error)
-        }
-      }
-    }
-    fetchDeliveryAddress()
-  }, [])
+    loadDeliveryAddresses()
+  }, [loadDeliveryAddresses])
 
   const handleAddressSelect = (address) => {
     setSelectedAddress(address)
-    persistDeliveryAddress(address)
   }
 
   const handleAddNewAddress = () => {
     setShowAddressForm(true)
     setEditingAddress(null)
     setNewAddress({
-      name: "",
-      phone: "",
-      address: "",
-      city: "",
-      state: "",
-      zipCode: "",
-      isDefault: false,
+      ...initialAddressState,
+      isDefault: addresses.length === 0,
     })
   }
 
@@ -205,34 +222,19 @@ const CheckoutPage = () => {
   const handleAddressSubmit = async (e) => {
     e.preventDefault()
 
-    if (editingAddress) {
-      // Update existing address
-      const updatedAddresses = addresses.map((addr) =>
-        addr.id === editingAddress.id ? { ...newAddress, id: editingAddress.id } : addr,
-      )
-      setAddresses(updatedAddresses)
-      const updatedSelection = { ...newAddress, id: editingAddress.id }
-      setSelectedAddress(updatedSelection)
-      await persistDeliveryAddress(updatedSelection)
-    } else {
-      // Add new address
-      const newId = addresses.length > 0 ? Math.max(...addresses.map((addr) => addr.id)) + 1 : 1
-      const addressToAdd = { ...newAddress, id: newId }
-      setAddresses([...addresses, addressToAdd])
-      setSelectedAddress(addressToAdd)
-      await persistDeliveryAddress(addressToAdd)
+    try {
+      await persistDeliveryAddress({
+        addressData: newAddress,
+        addressId: editingAddress?.id,
+        preferredId: editingAddress?.id || null,
+      })
+      setShowAddressForm(false)
+      setEditingAddress(null)
+      setNewAddress(initialAddressState)
+    } catch (error) {
+      console.error("Error saving address:", error)
+      alert("Failed to save address. Please try again.")
     }
-
-    // If this is set as default, update other addresses
-    if (newAddress.isDefault) {
-      const updatedAddresses = addresses.map((addr) => ({
-        ...addr,
-        isDefault: addr.id === (editingAddress ? editingAddress.id : null) ? true : false,
-      }))
-      setAddresses(updatedAddresses)
-    }
-
-    setShowAddressForm(false)
   }
 
   const handleApplyCoupon = () => {
@@ -638,7 +640,11 @@ const CheckoutPage = () => {
                 </div>
               ) : (
                 <div className="no-address">
-                  <p>No addresses saved. Please add a delivery address.</p>
+                  <h3>No delivery address yet</h3>
+                  <p>Add your delivery address to place your order.</p>
+                  <button className="add-new-btn" onClick={handleAddNewAddress}>
+                    <FaPlus /> Add Delivery Address
+                  </button>
                 </div>
               )}
             </section>
