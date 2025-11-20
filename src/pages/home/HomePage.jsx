@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Header from "../../components/Header"
 import HeroSection from "../../components/HeroSection"
 import Categories from "../../components/Categories"
@@ -7,15 +7,60 @@ import Offer from "../../components/Offer"
 import CustomerReview from "../../components/CustomerReview"
 import Footer from "../../components/Footer"
 import { useWishlist } from "../../hooks/useWishlist"
+import api from "../../utils/api"
 import "./home.css"
 
 const HomePage = () => {
   const [cartItems, setCartItems] = useState([])
   const { wishlistItems, wishlistCount, toggleWishlist, isInWishlist } = useWishlist()
 
-  const addToCart = (product) => {
-    setCartItems([...cartItems, product])
-    alert(`${product.name || product.productName} added to cart!`)
+  const fetchCart = useCallback(async () => {
+    const token = localStorage.getItem("authToken")
+    if (!token) {
+      setCartItems([])
+      return
+    }
+
+    try {
+      const response = await api.get("/getUsercart")
+      if (response.data?.success) {
+        setCartItems(response.data.cartItems || [])
+      }
+    } catch (error) {
+      console.error("Failed to load cart items:", error)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchCart()
+  }, [fetchCart])
+
+  const addToCart = async (product) => {
+    const token = localStorage.getItem("authToken")
+    if (!token) {
+      alert("Please log in to add items to your cart.")
+      return
+    }
+
+    try {
+      const productId = product._id || product.id
+      if (!productId) {
+        throw new Error("Invalid product identifier")
+      }
+
+      await api.post("/addtocart", {
+        productId,
+        quantity: 1,
+      })
+
+      await fetchCart()
+      alert(`${product.productName || product.name} added to cart!`)
+    } catch (error) {
+      console.error("Add to cart failed:", error)
+      const message =
+        error.response?.data?.message || "Failed to add item to cart. Please try again."
+      alert(message)
+    }
   }
 
   const handleWishlistToggle = async (product) => {
@@ -27,9 +72,14 @@ const HomePage = () => {
     }
   }
 
+  const cartItemCount = cartItems.reduce(
+    (total, item) => total + (item.quantity || 0),
+    0
+  )
+
   return (
     <div className="app">
-      <Header cartItemCount={cartItems.length} wishlistItemCount={wishlistCount} />
+      <Header cartItemCount={cartItemCount} wishlistItemCount={wishlistCount} />
       <div className="content-wrapper">
         <HeroSection />
         <Categories />
