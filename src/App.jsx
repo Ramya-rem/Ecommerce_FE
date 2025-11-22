@@ -12,6 +12,7 @@ import OrderConfirmationPage from './pages/checkout/OrderConfirmationPage'
 import { useEffect, useState } from 'react'
 import ProductsPage from './pages/products/ProductPage'
 import OrdersPage from './pages/orders/OrdersPage'
+import ProfilePage from './pages/profile/ProfilePage'
 import { OrderProvider } from './context/OrderContext'
 
 function App() {
@@ -33,6 +34,7 @@ function App() {
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/order-success" element={<OrderConfirmationPage />} />
             <Route path="/orders" element={<OrdersPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
             <Route path="/" element={<Signup />} />
             <Route path="/login" element={<Login />} />
             <Route path="/forgotpassword" element={<ForgotPassword />} />
