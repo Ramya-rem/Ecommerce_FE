@@ -397,6 +397,9 @@
   padding: 1.25rem;
   border-radius: 8px;
   border: 1px solid #efdbc7;
+  overflow: hidden;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .feedback-header-card {
@@ -435,6 +438,11 @@
   color: #333;
   line-height: 1.6;
   margin: 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 @media (min-width: 768px) {
