@@ -40,10 +40,17 @@
     border: 1px solid #efdbc7;
     border-radius: 8px;
     overflow: hidden;
+    height: 280px;
+    display: flex;
+    flex-direction: column;
   }
   
   .review-content {
     padding: 1.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
   
   .reviewer-info {
@@ -64,6 +71,9 @@
   
   .reviewer-details {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
   
   .reviewer-header {
@@ -104,6 +114,10 @@
   .review-text {
     font-size: 0.875rem;
     line-height: 1.5;
+    flex: 1;
+    overflow-y: auto;
+    word-wrap: break-word;
+    max-height: 120px;
   }
   
   .load-more-icon,
@@ -148,6 +162,11 @@
   @media (max-width: 768px) {
     .reviews-grid {
       grid-template-columns: 1fr;
+    }
+
+    .review-card {
+      height: auto;
+      min-height: 280px;
     }
 
     .load-more-icon {

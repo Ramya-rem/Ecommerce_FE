@@ -186,11 +186,29 @@ const ProfilePage = () => {
   }
 
   const handleFeedbackChange = (e) => {
-    setFeedbackData({ ...feedbackData, feedback: e.target.value })
+    const value = e.target.value
+    setFeedbackData({ ...feedbackData, feedback: value })
   }
+
+  const getWordCount = (text) => {
+    if (!text || !text.trim()) return 0
+    return text.trim().split(/\s+/).filter(word => word.length > 0).length
+  }
+
+  const wordCount = getWordCount(feedbackData.feedback)
+  const isWordLimitExceeded = wordCount > 200
 
   const handleSubmitFeedback = async (e) => {
     e.preventDefault()
+
+    // Check if rating is selected
+    if (!feedbackData.rating || feedbackData.rating === 0) {
+      setMessage({
+        type: "error",
+        text: "Please select a rating before submitting.",
+      })
+      return
+    }
 
     setSubmittingFeedback(true)
     setMessage({ type: "", text: "" })
@@ -204,10 +222,17 @@ const ProfilePage = () => {
         await fetchUserFeedbacks()
         setTimeout(() => setMessage({ type: "", text: "" }), 3000)
       }
-    } catch (error) {
+    } catch (error) {        
+      if (error.response) {
+        // Axios error with response
+        errorMessage = error.response.data?.message || error.response.data?.error || error.response.statusText || errorMessage
+      } else {
+        // Error in setting up the request
+        errorMessage = error.message
+      }      
       setMessage({
         type: "error",
-        text: error.response?.data?.message || "Failed to submit feedback. Please try again.",
+        text: errorMessage,
       })
     } finally {
       setSubmittingFeedback(false)
@@ -375,8 +400,40 @@ const ProfilePage = () => {
                   placeholder="Share your thoughts about our service..."
                   rows="5"
                   required
+                  className={isWordLimitExceeded ? "error" : ""}
                 />
+                <div className={`word-count ${isWordLimitExceeded ? "error" : ""}`}>
+                  {wordCount} / 200 words {isWordLimitExceeded && "(Limit exceeded)"}
+                </div>
               </div>
+
+              {message.text && message.type === "error" && (
+                <div className="feedback-form-error" style={{ 
+                  color: "#721c24", 
+                  backgroundColor: "#f8d7da", 
+                  border: "1px solid #f5c6cb",
+                  padding: "0.75rem", 
+                  borderRadius: "4px", 
+                  marginBottom: "1rem",
+                  fontSize: "0.875rem"
+                }}>
+                  {message.text}
+                </div>
+              )}
+
+              {message.text && message.type === "success" && (
+                <div className="feedback-form-success" style={{ 
+                  color: "#155724", 
+                  backgroundColor: "#d4edda", 
+                  border: "1px solid #c3e6cb",
+                  padding: "0.75rem", 
+                  borderRadius: "4px", 
+                  marginBottom: "1rem",
+                  fontSize: "0.875rem"
+                }}>
+                  {message.text}
+                </div>
+              )}
 
               <button
                 type="submit"

@@ -334,6 +334,26 @@
   border-color: #8b5a2b;
 }
 
+.feedback-form textarea.error {
+  border-color: #dc3545;
+}
+
+.feedback-form textarea.error:focus {
+  border-color: #dc3545;
+}
+
+.word-count {
+  font-size: 0.875rem;
+  color: #666;
+  text-align: right;
+  margin-top: 0.25rem;
+}
+
+.word-count.error {
+  color: #dc3545;
+  font-weight: 600;
+}
+
 .submit-feedback-btn {
   background-color: #efdbc7;
   color: #333;
