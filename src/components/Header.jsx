@@ -8,6 +8,7 @@ import api from "../utils/api"
 function Header({ cartItemCount, wishlistItemCount: propWishlistItemCount }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [wishlistItemCount, setWishlistItemCount] = useState(propWishlistItemCount || 0)
+  const [profilePicture, setProfilePicture] = useState(null)
   const location = useLocation()  
 
   // Fetch wishlist count from backend
@@ -28,10 +29,42 @@ function Header({ cartItemCount, wishlistItemCount: propWishlistItemCount }) {
     fetchWishlistCount()
   }, [propWishlistItemCount])
 
+  // Fetch profile picture from backend
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await api.get("/profile")
+        if (response.data?.success && response.data.user?.profilePicture) {
+          setProfilePicture(response.data.user.profilePicture)
+        } else {
+          setProfilePicture(null)
+        }
+      } catch (error) {
+        // Silently fail if profile fetch fails (user might not be logged in)
+        setProfilePicture(null)
+      }
+    }
+
+    fetchProfile()
+  }, [location.pathname]) // Refetch when navigating (especially useful after profile updates)
+
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen)
   }
   const isActive = (path) => location.pathname === path ? "active-link" : ""
+
+  const getProfilePictureUrl = () => {
+    if (profilePicture) {
+      if (profilePicture.startsWith("data:")) {
+        return profilePicture
+      }
+      if (profilePicture.startsWith("/uploads/")) {
+        return `${import.meta.env.VITE_BASE_URL}${profilePicture}`
+      }
+      return profilePicture
+    }
+    return null
+  }
 
   return (
     <header className="header">
@@ -69,7 +102,15 @@ function Header({ cartItemCount, wishlistItemCount: propWishlistItemCount }) {
             </li>
             <li className="icon-link">
               <Link to="/profile" className={isActive("/profile")}>
-                <FaUser />
+                {getProfilePictureUrl() ? (
+                  <img 
+                    src={getProfilePictureUrl()} 
+                    alt="Profile" 
+                    className="profile-icon-image"
+                  />
+                ) : (
+                  <FaUser />
+                )}
               </Link>
             </li>
           </ul>
