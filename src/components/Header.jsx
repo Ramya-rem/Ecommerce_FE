@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { FaUser, FaBars, FaTimes } from "react-icons/fa"
 import "../styles/Header.css"
@@ -8,8 +8,18 @@ import api from "../utils/api"
 function Header({ cartItemCount, wishlistItemCount: propWishlistItemCount }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [wishlistItemCount, setWishlistItemCount] = useState(propWishlistItemCount || 0)
-  const [profilePicture, setProfilePicture] = useState(null)
-  const location = useLocation()  
+  // Initialize from localStorage if available to prevent initial flicker
+  const [profilePicture, setProfilePicture] = useState(() => {
+    try {
+      const cached = localStorage.getItem("profilePicture")
+      return cached || null
+    } catch {
+      return null
+    }
+  })
+  const location = useLocation()
+  const previousPathnameRef = useRef(location.pathname)
+  const hasFetchedRef = useRef(false)  
 
   // Fetch wishlist count from backend
   useEffect(() => {
@@ -29,24 +39,85 @@ function Header({ cartItemCount, wishlistItemCount: propWishlistItemCount }) {
     fetchWishlistCount()
   }, [propWishlistItemCount])
 
-  // Fetch profile picture from backend
+  // Fetch profile picture once on mount
   useEffect(() => {
+    if (hasFetchedRef.current) return
+    
     const fetchProfile = async () => {
       try {
         const response = await api.get("/profile")
         if (response.data?.success && response.data.user?.profilePicture) {
-          setProfilePicture(response.data.user.profilePicture)
+          const newPicture = response.data.user.profilePicture
+          setProfilePicture(newPicture)
+          // Cache it in localStorage
+          try {
+            localStorage.setItem("profilePicture", newPicture)
+          } catch (e) {
+            // Ignore localStorage errors
+          }
         } else {
-          setProfilePicture(null)
+          // Only clear if we didn't have a cached value
+          setProfilePicture((prev) => {
+            if (!prev) {
+              try {
+                localStorage.removeItem("profilePicture")
+              } catch (e) {
+                // Ignore localStorage errors
+              }
+              return null
+            }
+            return prev // Keep existing cached picture
+          })
         }
       } catch (error) {
-        // Silently fail if profile fetch fails (user might not be logged in)
-        setProfilePicture(null)
+        // Silently fail - keep existing cached picture
+      } finally {
+        hasFetchedRef.current = true
       }
     }
 
     fetchProfile()
-  }, [location.pathname]) // Refetch when navigating (especially useful after profile updates)
+  }, [])
+
+  // Only refetch when navigating away from profile page (user might have updated)
+  useEffect(() => {
+    const wasOnProfilePage = previousPathnameRef.current === "/profile"
+    const isLeavingProfilePage = wasOnProfilePage && location.pathname !== "/profile"
+    
+    if (isLeavingProfilePage) {
+      const fetchProfile = async () => {
+        try {
+          const response = await api.get("/profile")
+          if (response.data?.success) {
+            const newPicture = response.data.user?.profilePicture || null
+            setProfilePicture((prev) => {
+              // Only update if different
+              if (newPicture !== prev) {
+                try {
+                  if (newPicture) {
+                    localStorage.setItem("profilePicture", newPicture)
+                  } else {
+                    localStorage.removeItem("profilePicture")
+                  }
+                } catch (e) {
+                  // Ignore localStorage errors
+                }
+                return newPicture
+              }
+              return prev // Keep existing to prevent unnecessary re-renders
+            })
+          }
+        } catch (error) {
+          // Keep existing profile picture on error to prevent flickering
+        }
+      }
+      
+      fetchProfile()
+    }
+    
+    // Update the previous pathname ref
+    previousPathnameRef.current = location.pathname
+  }, [location.pathname])
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen)
