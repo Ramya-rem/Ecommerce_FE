@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { FaArrowLeft, FaUser, FaCamera, FaStar, FaRegStar } from "react-icons/fa"
+import { FaArrowLeft, FaUser, FaCamera, FaStar, FaRegStar, FaTrash } from "react-icons/fa"
 import Header from "../../components/Header"
 import Footer from "../../components/Footer"
 import api from "../../utils/api"
@@ -27,6 +27,7 @@ const ProfilePage = () => {
   const [userFeedbacks, setUserFeedbacks] = useState([])
   const [submittingFeedback, setSubmittingFeedback] = useState(false)
   const [showFeedbackForm, setShowFeedbackForm] = useState(false)
+  const [deletingFeedbackId, setDeletingFeedbackId] = useState(null)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -243,6 +244,32 @@ const ProfilePage = () => {
     if (!dateString) return ""
     const date = new Date(dateString)
     return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })
+  }
+
+  const handleDeleteFeedback = async (feedbackId) => {
+    if (!window.confirm("Are you sure you want to delete this feedback? This action cannot be undone.")) {
+      return
+    }
+
+    setDeletingFeedbackId(feedbackId)
+    setMessage({ type: "", text: "" })
+
+    try {
+      const response = await api.delete(`/feedback/${feedbackId}`)
+      if (response.data?.success) {
+        setMessage({ type: "success", text: "Feedback deleted successfully!" })
+        await fetchUserFeedbacks()
+        setTimeout(() => setMessage({ type: "", text: "" }), 3000)
+      }
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || "Failed to delete feedback. Please try again."
+      setMessage({
+        type: "error",
+        text: errorMessage,
+      })
+    } finally {
+      setDeletingFeedbackId(null)
+    }
   }
 
   if (loading) {
@@ -467,7 +494,21 @@ const ProfilePage = () => {
                           )
                         ))}
                       </div>
-                      <span className="feedback-date">{formatDate(feedback.createdAt)}</span>
+                      <div className="feedback-card-actions">
+                        <span className="feedback-date">{formatDate(feedback.createdAt)}</span>
+                        <button
+                          className="delete-feedback-btn"
+                          onClick={() => handleDeleteFeedback(feedback._id)}
+                          disabled={deletingFeedbackId === feedback._id}
+                          aria-label="Delete feedback"
+                        >
+                          {deletingFeedbackId === feedback._id ? (
+                            "Deleting..."
+                          ) : (
+                            <FaTrash />
+                          )}
+                        </button>
+                      </div>
                     </div>
                     <p className="feedback-text">{feedback.feedback}</p>
                   </div>

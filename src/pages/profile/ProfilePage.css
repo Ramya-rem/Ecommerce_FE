@@ -429,9 +429,39 @@
   color: #d1d1d1;
 }
 
+.feedback-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 .feedback-date {
   color: #666;
   font-size: 0.9rem;
+}
+
+.delete-feedback-btn {
+  background-color: transparent;
+  border: none;
+  color: #dc3545;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s, color 0.3s;
+  font-size: 1rem;
+}
+
+.delete-feedback-btn:hover:not(:disabled) {
+  background-color: #fee;
+  color: #c82333;
+}
+
+.delete-feedback-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .feedback-text {
