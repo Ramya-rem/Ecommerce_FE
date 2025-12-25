@@ -13,6 +13,7 @@ const OrderConfirmationPage = () => {
   const [wishlistItemCount, setWishlistItemCount] = useState(0)
   const [orderDetails, setOrderDetails] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [taxPercentage, setTaxPercentage] = useState(0)
 
 
   // Fetch wishlist count from backend
@@ -42,6 +43,12 @@ const OrderConfirmationPage = () => {
           
           if (contextOrder) {
             // Use order from context
+            // Calculate tax percentage if tax and subtotal are available
+            const subtotal = contextOrder.subtotal || 0
+            const tax = contextOrder.tax || 0
+            const calculatedTaxPercentage = subtotal > 0 ? (tax / subtotal) * 100 : 0
+            setTaxPercentage(calculatedTaxPercentage)
+            
             setOrderDetails({
               orderId: contextOrder.id,
               totalAmount: contextOrder.total,
@@ -52,14 +59,19 @@ const OrderConfirmationPage = () => {
               paymentMethod: contextOrder.paymentMethod || (localStorage.getItem("paymentData") ? "Card" : "Cash on Delivery"),
               items: contextOrder.items || [],
               address: contextOrder.deliveryAddress || {},
-              subtotal: contextOrder.subtotal || (contextOrder.total ? contextOrder.total / 1.08 : 0),
-              tax: contextOrder.tax || (contextOrder.total ? (contextOrder.total / 1.08) * 0.08 : 0),
+              subtotal: subtotal,
+              tax: tax,
               total: contextOrder.total || location.state.totalAmount || 0,
               discount: contextOrder.discount || 0
             })
           } else if (location.state.orderData) {
             // Use orderData from location.state
             const orderData = location.state.orderData
+            const subtotal = orderData.subtotal || 0
+            const tax = orderData.tax || 0
+            const calculatedTaxPercentage = subtotal > 0 ? (tax / subtotal) * 100 : 0
+            setTaxPercentage(calculatedTaxPercentage)
+            
             setOrderDetails({
               orderId: location.state.orderId,
               totalAmount: location.state.totalAmount || orderData.total || 0,
@@ -70,14 +82,16 @@ const OrderConfirmationPage = () => {
               paymentMethod: orderData.paymentMethod || (localStorage.getItem("paymentData") ? "Card" : "Cash on Delivery"),
               items: orderData.items || [],
               address: orderData.deliveryAddress || {},
-              subtotal: orderData.subtotal || (orderData.total ? orderData.total / 1.08 : 0),
-              tax: orderData.tax || (orderData.total ? (orderData.total / 1.08) * 0.08 : 0),
+              subtotal: subtotal,
+              tax: tax,
               total: orderData.total || location.state.totalAmount || 0,
               discount: orderData.discount || 0
             })
           } else {
             // Fallback: use location.state values
             const totalAmount = location.state.totalAmount || 0
+            // For fallback, we don't have tax data, so set to 0
+            setTaxPercentage(0)
             setOrderDetails({
               orderId: location.state.orderId,
               totalAmount: totalAmount,
@@ -86,8 +100,8 @@ const OrderConfirmationPage = () => {
               paymentMethod: localStorage.getItem("paymentData") ? "Card" : "Cash on Delivery",
               items: JSON.parse(localStorage.getItem("cartItems") || "[]"),
               address: JSON.parse(localStorage.getItem("selectedAddress") || "{}"),
-              subtotal: totalAmount > 0 ? totalAmount / 1.08 : 0,
-              tax: totalAmount > 0 ? (totalAmount / 1.08) * 0.08 : 0,
+              subtotal: 0,
+              tax: 0,
               total: totalAmount,
               discount: 0
             })
@@ -241,7 +255,7 @@ const OrderConfirmationPage = () => {
                 </div>
 
                 <div className="summary-row">
-                  <span>Tax (8%)</span>
+                  <span>Tax {taxPercentage > 0 ? `(${taxPercentage.toFixed(1)}%)` : ''}</span>
                   <span>${(orderDetails.tax || 0).toFixed(2)}</span>
                 </div>
 

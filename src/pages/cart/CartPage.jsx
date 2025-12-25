@@ -16,6 +16,7 @@ const CartPage = () => {
   const [orderSummary, setOrderSummary] = useState({
     subtotal: 0,
     tax: 0,
+    taxPercentage: 0,
     shipping: "FREE",
     total: 0
   })
@@ -63,6 +64,7 @@ const CartPage = () => {
         setOrderSummary({
           subtotal: Number(response.data.subtotal) || 0,
           tax: Number(response.data.tax) || 0,
+          taxPercentage: Number(response.data.taxPercentage) || 0,
           shipping: response.data.shipping || "FREE",
           total: Number(response.data.total) || 0
         })
@@ -73,6 +75,7 @@ const CartPage = () => {
       setOrderSummary({
         subtotal: 0,
         tax: 0,
+        taxPercentage: 0,
         shipping: "FREE",
         total: 0
       })
@@ -87,6 +90,7 @@ const CartPage = () => {
       setOrderSummary({
         subtotal: 0,
         tax: 0,
+        taxPercentage: 0,
         shipping: "FREE",
         total: 0
       })
@@ -280,7 +284,7 @@ const CartPage = () => {
                 </div>
 
                 <div className="summary-row">
-                  <span>Tax (8%)</span>
+                  <span>Tax {orderSummary.taxPercentage > 0 ? `(${orderSummary.taxPercentage.toFixed(1)}%)` : ''}</span>
                   <span>${orderSummary.tax.toFixed(2)}</span>
                 </div>
 

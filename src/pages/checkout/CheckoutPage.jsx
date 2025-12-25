@@ -61,6 +61,8 @@ const CheckoutPage = () => {
   const [wishlistItemCount, setWishlistItemCount] = useState(0)
   const [loading, setLoading] = useState(false)
   const [addresses, setAddresses] = useState([])
+  const [taxPercentage, setTaxPercentage] = useState(0)
+  const [taxAmount, setTaxAmount] = useState(0)
 
   const [selectedAddress, setSelectedAddress] = useState(null)
   const [showAddressForm, setShowAddressForm] = useState(false)
@@ -140,6 +142,29 @@ const CheckoutPage = () => {
     fetchCart()
   }, [])
 
+  // Fetch tax data when cart items change
+  useEffect(() => {
+    const fetchTaxData = async () => {
+      if (cartItems.length === 0) {
+        setTaxPercentage(0)
+        setTaxAmount(0)
+        return
+      }
+      
+      try {
+        const summaryResponse = await api.get("/fetchOrderSummary")
+        if (summaryResponse?.data) {
+          setTaxPercentage(Number(summaryResponse.data.taxPercentage) || 0)
+          setTaxAmount(Number(summaryResponse.data.tax) || 0)
+        }
+      } catch (error) {
+        console.error("Error fetching tax data", error)
+        // Don't fail if tax fetch fails
+      }
+    }
+    fetchTaxData()
+  }, [cartItems])
+
   // Fetch wishlist count from backend
   useEffect(() => {
     const fetchWishlistCount = async () => {
@@ -167,7 +192,14 @@ const CheckoutPage = () => {
   }
 
   const calculateTax = () => {
-    return calculateSubtotal() * 0.08 // 8% tax
+    // Use tax amount from backend if available, otherwise calculate from percentage
+    if (taxAmount > 0) {
+      return taxAmount
+    }
+    if (taxPercentage > 0) {
+      return calculateSubtotal() * (taxPercentage / 100)
+    }
+    return 0
   }
 
   const calculateDiscount = () => {
@@ -775,7 +807,7 @@ const CheckoutPage = () => {
               </div>
 
               <div className="summary-row">
-                <span>Tax (8%)</span>
+                <span>Tax {taxPercentage > 0 ? `(${taxPercentage.toFixed(1)}%)` : ''}</span>
                 <span>${calculateTax().toFixed(2)}</span>
               </div>
 
