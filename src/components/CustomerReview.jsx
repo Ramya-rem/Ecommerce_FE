@@ -7,6 +7,7 @@ function CustomerReview() {
   const [feedbacks, setFeedbacks] = useState([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [failedImages, setFailedImages] = useState(new Set())
   const FEEDBACKS_PER_PAGE = 3
 
   useEffect(() => {
@@ -110,7 +111,18 @@ function CustomerReview() {
                 <div className="review-content">
                   <div className="reviewer-info">
                     <div className="avatar">
-                      <FaUser />
+                      {feedback.profilePicture && !failedImages.has(feedback._id || feedback.id) ? (
+                        <img 
+                          src={`${import.meta.env.VITE_BASE_URL}${feedback.profilePicture}`} 
+                          alt={feedback.userName || feedback.name}
+                          onError={() => {
+                            // Track failed image loads
+                            setFailedImages(prev => new Set([...prev, feedback._id || feedback.id]))
+                          }}
+                        />
+                      ) : (
+                        <FaUser />
+                      )}
                     </div>
                     <div className="reviewer-details">
                       <div className="reviewer-header">
