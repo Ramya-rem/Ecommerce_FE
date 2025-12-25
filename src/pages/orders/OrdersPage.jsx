@@ -69,12 +69,15 @@ const OrdersPage = () => {
 
   const getOrderTotals = (order) => {
     const items = order?.orderItems || []
-    const total = items.reduce((sum, item) => {
-      const price = item?.productRefId?.price || 0
-      const quantity = item?.quantity || 1
-      return sum + price * quantity
-    }, 0)
-    return { itemCount: items.length, total }
+    const itemCount = items.length
+    // Use actual order data from backend
+    const subtotal = order?.subtotal || 0
+    const tax = order?.tax || 0
+    const discount = order?.discount || 0
+    const total = order?.totalAmount || 0
+    const coupon = order?.coupon || null
+    
+    return { itemCount, subtotal, tax, discount, total, coupon }
   }
 
   if (loading) {
@@ -133,7 +136,7 @@ const OrdersPage = () => {
         ) : (
           <div className="orders-list">
             {orders.map((order) => {
-              const { itemCount, total } = getOrderTotals(order)
+              const { itemCount, subtotal, tax, discount, total, coupon } = getOrderTotals(order)
               return (
                 <div className="order-card" key={order._id}>
                   <div className="order-card-header">
@@ -166,6 +169,31 @@ const OrdersPage = () => {
                         </div>
                       </div>
                     ))}
+                  </div>
+                  <div className="order-breakdown">
+                    <div className="breakdown-row">
+                      <span>Subtotal</span>
+                      <span>${subtotal.toFixed(2)}</span>
+                    </div>
+                    {tax > 0 && (
+                      <div className="breakdown-row">
+                        <span>Tax</span>
+                        <span>${tax.toFixed(2)}</span>
+                      </div>
+                    )}
+                    {discount > 0 && (
+                      <div className="breakdown-row discount-row">
+                        <span>
+                          Coupon{coupon && ` (${coupon.code})`}
+                        </span>
+                        <span className="discount-amount">-${discount.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="breakdown-divider"></div>
+                    <div className="breakdown-row total-row">
+                      <span>Total</span>
+                      <span className="total-amount">${total.toFixed(2)}</span>
+                    </div>
                   </div>
                 </div>
               )

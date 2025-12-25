@@ -114,10 +114,11 @@
 }
 
 .order-items {
-  padding: 0.75rem 1.25rem 1rem;
+  padding: 0.75rem 1.25rem;
   display: grid;
   grid-template-columns: 1fr;
   gap: 0.75rem;
+  border-bottom: 1px solid #f0e6da;
 }
 
 .order-item {
@@ -151,6 +152,68 @@
 .subtotal {
   font-weight: 600;
   color: #333;
+}
+
+.order-breakdown {
+  padding: 1rem 1.25rem;
+  background-color: #fef7ef;
+}
+
+.breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  font-size: 0.95rem;
+  color: #666;
+}
+
+.breakdown-row span:first-child {
+  color: #666;
+}
+
+.breakdown-row span:last-child {
+  font-weight: 500;
+  color: #333;
+}
+
+.discount-row {
+  color: #22c55e;
+}
+
+.discount-row span:first-child {
+  color: #22c55e;
+  font-weight: 500;
+
+}
+
+.discount-amount {
+  color: #22c55e !important;
+  font-weight: 600;
+}
+
+.breakdown-divider {
+  height: 1px;
+  background-color: #e0c9b0;
+  margin: 0.5rem 0;
+}
+
+.total-row {
+  margin-top: 0.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e0c9b0;
+}
+
+.total-row span:first-child {
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: #333;
+}
+
+.total-amount {
+  font-weight: 700 !important;
+  font-size: 1.1rem;
+  color: #333 !important;
 }
 
 .loading-state,
