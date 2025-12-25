@@ -17,6 +17,8 @@ const CartPage = () => {
     subtotal: 0,
     tax: 0,
     taxPercentage: 0,
+    discount: 0,
+    coupon: null,
     shipping: "FREE",
     total: 0
   })
@@ -65,6 +67,8 @@ const CartPage = () => {
           subtotal: Number(response.data.subtotal) || 0,
           tax: Number(response.data.tax) || 0,
           taxPercentage: Number(response.data.taxPercentage) || 0,
+          discount: Number(response.data.discount) || 0,
+          coupon: response.data.coupon || null,
           shipping: response.data.shipping || "FREE",
           total: Number(response.data.total) || 0
         })
@@ -76,6 +80,8 @@ const CartPage = () => {
         subtotal: 0,
         tax: 0,
         taxPercentage: 0,
+        discount: 0,
+        coupon: null,
         shipping: "FREE",
         total: 0
       })
@@ -91,6 +97,8 @@ const CartPage = () => {
         subtotal: 0,
         tax: 0,
         taxPercentage: 0,
+        discount: 0,
+        coupon: null,
         shipping: "FREE",
         total: 0
       })
@@ -287,6 +295,15 @@ const CartPage = () => {
                   <span>Tax {orderSummary.taxPercentage > 0 ? `(${orderSummary.taxPercentage.toFixed(1)}%)` : ''}</span>
                   <span>${orderSummary.tax.toFixed(2)}</span>
                 </div>
+
+                {orderSummary.discount > 0 && (
+                  <div className="summary-row discount-row">
+                    <span>
+                      First Order Discount{orderSummary.coupon && ` (${orderSummary.coupon.code})`}
+                    </span>
+                    <span className="discount-amount">-${orderSummary.discount.toFixed(2)}</span>
+                  </div>
+                )}
 
                 <div className="summary-row shipping">
                   <span>Shipping</span>

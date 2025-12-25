@@ -184,7 +184,9 @@ const OrdersPage = () => {
                     {discount > 0 && (
                       <div className="breakdown-row discount-row">
                         <span>
-                          Coupon{coupon && ` (${coupon.code})`}
+                          {coupon?.code === "FIRSTORDER20" 
+                            ? `First Order Discount (${coupon.code})`
+                            : `Coupon${coupon ? ` (${coupon.code})` : ''}`}
                         </span>
                         <span className="discount-amount">-${discount.toFixed(2)}</span>
                       </div>

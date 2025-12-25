@@ -165,6 +165,10 @@ const CheckoutPage = () => {
           if (summaryResponse.data.discount) {
             setDiscountAmount(Number(summaryResponse.data.discount) || 0)
           }
+          // If backend auto-applied a coupon (e.g., first order discount), update state
+          if (summaryResponse.data.coupon && !appliedCoupon) {
+            setAppliedCoupon(summaryResponse.data.coupon)
+          }
         }
       } catch (error) {
         console.error("Error fetching tax data", error)

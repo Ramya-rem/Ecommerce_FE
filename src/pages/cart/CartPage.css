@@ -346,6 +346,19 @@
   font-weight: 600;
 }
 
+.summary-row.discount-row {
+  color: #22c55e;
+}
+
+.summary-row.discount-row span:first-child {
+  color: #22c55e;
+}
+
+.discount-amount {
+  color: #22c55e !important;
+  font-weight: 600;
+}
+
 .summary-divider {
   height: 1px;
   background-color: #eee;

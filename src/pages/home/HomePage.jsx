@@ -12,6 +12,8 @@ import "./home.css"
 
 const HomePage = () => {
   const [cartItems, setCartItems] = useState([])
+  const [isNewUser, setIsNewUser] = useState(true) // Default to true, will check on mount
+  const [checkingUserStatus, setCheckingUserStatus] = useState(true)
   const { wishlistItems, wishlistCount, toggleWishlist, isInWishlist } = useWishlist()
 
   const fetchCart = useCallback(async () => {
@@ -34,6 +36,41 @@ const HomePage = () => {
   useEffect(() => {
     fetchCart()
   }, [fetchCart])
+
+  // Check if user is new (has no orders)
+  useEffect(() => {
+    const checkUserStatus = async () => {
+      const token = localStorage.getItem("authToken")
+      if (!token) {
+        setCheckingUserStatus(false)
+        setIsNewUser(true) // Show offer to non-logged-in users (they haven't ordered)
+        return
+      }
+
+      try {
+        const response = await api.get("/fetchuserOrders")
+        if (response.data?.success) {
+          const orders = response.data.orders || []
+          // User is new if they have no orders
+          setIsNewUser(orders.length === 0)
+        } else {
+          setIsNewUser(true) // If API fails, assume new user
+        }
+      } catch (error) {
+        // If 404 or no orders, user is new
+        if (error.response?.status === 404) {
+          setIsNewUser(true)
+        } else {
+          // For other errors, don't show offer to be safe
+          setIsNewUser(false)
+        }
+      } finally {
+        setCheckingUserStatus(false)
+      }
+    }
+
+    checkUserStatus()
+  }, [])
 
   const addToCart = async (product) => {
     const token = localStorage.getItem("authToken")
@@ -90,7 +127,7 @@ const HomePage = () => {
             isInWishlist={isInWishlist}
             onToggleWishlist={handleWishlistToggle}
           />
-          <Offer />
+          {!checkingUserStatus && isNewUser && <Offer />}
           <CustomerReview />
         </div>
       </div>
