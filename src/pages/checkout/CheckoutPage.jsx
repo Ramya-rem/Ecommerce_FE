@@ -544,7 +544,7 @@ const CheckoutPage = () => {
             <FaArrowLeft />
             Back to Cart
           </Link>
-          <h1>Checkout</h1>
+          <h1>Review Order</h1>
         </div>
 
         <div className="checkout-content">
