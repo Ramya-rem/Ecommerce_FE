@@ -20,17 +20,8 @@ const CheckoutPage = () => {
   const [selectedAddress, setSelectedAddress] = useState(null) // Declared selectedAddress variable
   const [paymentMethod, setPaymentMethod] = useState("cod")
   const [appliedCoupon, setAppliedCoupon] = useState(null)
-  const [couponCode, setCouponCode] = useState("")
-  const [couponError, setCouponError] = useState("")
+  
   const [showStripePayment, setShowStripePayment] = useState(false) // Changed from showUPIPayment to showStripePayment
-
-  // Available coupons (in a real app, this would come from an API)
-  const availableCoupons = [
-    { code: "WELCOME10", discount: 10, type: "percentage", minOrder: 30 },
-    { code: "FREESHIP", discount: 5, type: "fixed", minOrder: 0 },
-    { code: "NEWUSER", discount: 15, type: "percentage", minOrder: 50 },
-  ]
-
   // Calculate total function
   const calculateTotal = () => {
     let total = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0)

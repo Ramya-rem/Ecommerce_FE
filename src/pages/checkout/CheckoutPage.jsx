@@ -73,6 +73,9 @@ const CheckoutPage = () => {
   const [couponCode, setCouponCode] = useState("")
   const [couponError, setCouponError] = useState("")
   const [showStripePayment, setShowStripePayment] = useState(false)
+  const [availableCoupons, setAvailableCoupons] = useState([])
+  const [discountAmount, setDiscountAmount] = useState(0)
+  const [validatingCoupon, setValidatingCoupon] = useState(false)
 
   const updateAddressState = useCallback(
     (addressList = [], preferredId = null) => {
@@ -142,7 +145,7 @@ const CheckoutPage = () => {
     fetchCart()
   }, [])
 
-  // Fetch tax data when cart items change
+  // Fetch tax data when cart items or coupon changes
   useEffect(() => {
     const fetchTaxData = async () => {
       if (cartItems.length === 0) {
@@ -152,10 +155,16 @@ const CheckoutPage = () => {
       }
       
       try {
-        const summaryResponse = await api.get("/fetchOrderSummary")
+        // Include coupon code in query if applied
+        const queryParam = appliedCoupon?.code ? `?couponCode=${appliedCoupon.code}` : ""
+        const summaryResponse = await api.get(`/fetchOrderSummary${queryParam}`)
         if (summaryResponse?.data) {
           setTaxPercentage(Number(summaryResponse.data.taxPercentage) || 0)
           setTaxAmount(Number(summaryResponse.data.tax) || 0)
+          // Update discount amount from backend
+          if (summaryResponse.data.discount) {
+            setDiscountAmount(Number(summaryResponse.data.discount) || 0)
+          }
         }
       } catch (error) {
         console.error("Error fetching tax data", error)
@@ -163,7 +172,7 @@ const CheckoutPage = () => {
       }
     }
     fetchTaxData()
-  }, [cartItems])
+  }, [cartItems, appliedCoupon])
 
   // Fetch wishlist count from backend
   useEffect(() => {
@@ -180,12 +189,20 @@ const CheckoutPage = () => {
     fetchWishlistCount()
   }, [])
 
-  // Available coupons (in a real app, this would come from an API)
-  const availableCoupons = [
-    { code: "WELCOME10", discount: 10, type: "percentage", minOrder: 30 },
-    { code: "FREESHIP", discount: 5, type: "fixed", minOrder: 0 },
-    { code: "NEWUSER", discount: 15, type: "percentage", minOrder: 50 },
-  ]
+  // Fetch available coupons from backend
+  useEffect(() => {
+    const fetchCoupons = async () => {
+      try {
+        const response = await api.get("/coupons")
+        if (response.data.success) {
+          setAvailableCoupons(response.data.coupons || [])
+        }
+      } catch (error) {
+        console.error("Error fetching coupons:", error)
+      }
+    }
+    fetchCoupons()
+  }, [])
 
   const calculateSubtotal = () => {
     return cartItems.reduce((total, item) => total + item.price * item.quantity, 0)
@@ -203,16 +220,8 @@ const CheckoutPage = () => {
   }
 
   const calculateDiscount = () => {
-    if (!appliedCoupon) return 0
-
-    const subtotal = calculateSubtotal()
-    if (subtotal < appliedCoupon.minOrder) return 0
-
-    if (appliedCoupon.type === "percentage") {
-      return (subtotal * appliedCoupon.discount) / 100
-    } else {
-      return appliedCoupon.discount
-    }
+    // Use discount amount calculated by backend
+    return discountAmount
   }
 
   const calculateTotal = () => {
@@ -269,26 +278,39 @@ const CheckoutPage = () => {
     }
   }
 
-  const handleApplyCoupon = () => {
-    const coupon = availableCoupons.find((c) => c.code === couponCode.toUpperCase())
-
-    if (!coupon) {
-      setCouponError("Invalid coupon code")
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponError("Please enter a coupon code")
       return
     }
 
-    if (calculateSubtotal() < coupon.minOrder) {
-      setCouponError(`Minimum order amount of $${coupon.minOrder.toFixed(2)} required`)
-      return
-    }
-
-    setAppliedCoupon(coupon)
+    setValidatingCoupon(true)
     setCouponError("")
-    setCouponCode("")
+
+    try {
+      const response = await api.post("/validate-coupon", {
+        couponCode: couponCode.trim(),
+      })
+
+      if (response.data.success) {
+        setAppliedCoupon(response.data.coupon)
+        setDiscountAmount(response.data.discountAmount)
+        setCouponError("")
+        setCouponCode("")
+      }
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || "Invalid coupon code"
+      setCouponError(errorMessage)
+      setAppliedCoupon(null)
+      setDiscountAmount(0)
+    } finally {
+      setValidatingCoupon(false)
+    }
   }
 
   const handleRemoveCoupon = () => {
     setAppliedCoupon(null)
+    setDiscountAmount(0)
     setCouponCode("")
     setCouponError("")
   }
@@ -330,6 +352,7 @@ const CheckoutPage = () => {
         deliveryAddress,
         editAddress: true,
         paymentMethod: paymentMethodValue, // "cod" or "card"
+        couponCode: appliedCoupon?.code || null, // Send coupon code to backend
       }
 
       // Add payment data for card payments
@@ -786,9 +809,18 @@ const CheckoutPage = () => {
                       placeholder="Enter coupon code"
                       value={couponCode}
                       onChange={(e) => setCouponCode(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === "Enter" && couponCode.trim() && !validatingCoupon) {
+                          handleApplyCoupon()
+                        }
+                      }}
                     />
-                    <button className="apply-coupon-btn" onClick={handleApplyCoupon} disabled={!couponCode.trim()}>
-                      Apply
+                    <button 
+                      className="apply-coupon-btn" 
+                      onClick={handleApplyCoupon} 
+                      disabled={!couponCode.trim() || validatingCoupon}
+                    >
+                      {validatingCoupon ? "Validating..." : "Apply"}
                     </button>
                   </div>
                   {couponError && <div className="coupon-error">{couponError}</div>}
