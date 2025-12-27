@@ -4,6 +4,7 @@ import Signup from './pages/signup/Signup'
 import Login from './pages/login/Login'
 import ForgotPassword from './pages/forgotpassword/ForgotPassword'
 import ResetPassword from './pages/forgotpassword/ResetPassword'
+// import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'
 import WishlistPage from './pages/wishlist/WishlistPage'
 import CartPage from './pages/cart/CartPage'
@@ -28,6 +29,8 @@ function App() {
       <Router>
         <div className={`app-container ${forceRender ? "rendered" : ""}`}>
           <Routes>
+          <Route path="/index.html" element={<Navigate to="/home" replace />} />
+
             <Route path="/home" element={<Homepage />} />
             <Route path="/wishlist" element={<WishlistPage />} />
             <Route path="/cart" element={<CartPage />} />
