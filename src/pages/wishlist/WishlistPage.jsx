@@ -3,7 +3,7 @@ import { Link } from "react-router-dom"
 import { FaHeart, FaShoppingCart, FaTrash, FaArrowLeft } from "react-icons/fa"
 import Header from "../../components/Header"
 import Footer from "../../components/Footer"
-import "./WishlistPage.css"
+import "./wishlistPage.css"
 import api from "../../utils/api"
 
 const WishlistPage = () => {
