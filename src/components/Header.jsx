@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react"
-import { Link, useLocation } from "react-router-dom"
-import { FaUser, FaBars, FaTimes } from "react-icons/fa"
+import { Link, useLocation, useNavigate } from "react-router-dom"
+import { FaUser, FaBars, FaTimes, FaSignOutAlt } from "react-icons/fa"
 import "../styles/Header.css"
 import logo from "../assets/crave&conquer.logo.png"
 import api from "../utils/api"
@@ -8,6 +8,7 @@ import api from "../utils/api"
 function Header({ cartItemCount, wishlistItemCount: propWishlistItemCount }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [wishlistItemCount, setWishlistItemCount] = useState(propWishlistItemCount || 0)
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false)
   // Initialize from localStorage if available to prevent initial flicker
   const [profilePicture, setProfilePicture] = useState(() => {
     try {
@@ -18,8 +19,10 @@ function Header({ cartItemCount, wishlistItemCount: propWishlistItemCount }) {
     }
   })
   const location = useLocation()
+  const navigate = useNavigate()
   const previousPathnameRef = useRef(location.pathname)
-  const hasFetchedRef = useRef(false)  
+  const hasFetchedRef = useRef(false)
+  const profileDropdownRef = useRef(null)  
 
   // Fetch wishlist count from backend
   useEffect(() => {
@@ -137,6 +140,54 @@ function Header({ cartItemCount, wishlistItemCount: propWishlistItemCount }) {
     return null
   }
 
+  const toggleProfileDropdown = () => {
+    setProfileDropdownOpen(!profileDropdownOpen)
+  }
+
+  const handleProfileClick = () => {
+    setProfileDropdownOpen(false)
+    setMobileMenuOpen(false)
+    navigate("/profile")
+  }
+
+  const handleLogout = async () => {
+    try {
+      // Call logout API to invalidate token on backend
+      await api.get("/logout")
+    } catch (error) {
+      console.error("Logout API error:", error)
+      // Continue with logout even if API call fails
+    } finally {
+      // Clear local storage
+      localStorage.removeItem("authToken")
+      localStorage.removeItem("profilePicture")
+      
+      // Close dropdown and mobile menu
+      setProfileDropdownOpen(false)
+      setMobileMenuOpen(false)
+      
+      // Navigate to login page
+      navigate("/login")
+    }
+  }
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
+        setProfileDropdownOpen(false)
+      }
+    }
+
+    if (profileDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [profileDropdownOpen])
+
   return (
     <header className="header">
       <div className="header-container">
@@ -172,17 +223,41 @@ function Header({ cartItemCount, wishlistItemCount: propWishlistItemCount }) {
               <Link to="/orders" className={isActive("/orders")}>Orders</Link>
             </li>
             <li className="icon-link">
-              <Link to="/profile" className={isActive("/profile")}>
-                {getProfilePictureUrl() ? (
-                  <img 
-                    src={getProfilePictureUrl()} 
-                    alt="Profile" 
-                    className="profile-icon-image"
-                  />
-                ) : (
-                  <FaUser />
+              <div className="profile-dropdown-container" ref={profileDropdownRef}>
+                <button 
+                  className={`profile-icon-button ${isActive("/profile")}`}
+                  onClick={toggleProfileDropdown}
+                  aria-label="Profile menu"
+                >
+                  {getProfilePictureUrl() ? (
+                    <img 
+                      src={getProfilePictureUrl()} 
+                      alt="Profile" 
+                      className="profile-icon-image"
+                    />
+                  ) : (
+                    <FaUser />
+                  )}
+                </button>
+                {profileDropdownOpen && (
+                  <div className="profile-dropdown">
+                    <button 
+                      className="profile-dropdown-item"
+                      onClick={handleProfileClick}
+                    >
+                      <FaUser />
+                      Profile
+                    </button>
+                    <button 
+                      className="profile-dropdown-item"
+                      onClick={handleLogout}
+                    >
+                      <FaSignOutAlt />
+                      Logout
+                    </button>
+                  </div>
                 )}
-              </Link>
+              </div>
             </li>
           </ul>
           <button className="close-menu" onClick={toggleMobileMenu}>
