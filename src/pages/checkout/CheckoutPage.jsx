@@ -560,7 +560,7 @@ const CheckoutPage = () => {
                   <FaMapMarkerAlt className="section-icon" />
                   Delivery Address
                 </h2>
-                {!showAddressForm && (
+                {!showAddressForm && addresses.length > 0 && (
                   <button className="add-new-btn" onClick={handleAddNewAddress}>
                     <FaPlus /> Add New Address
                   </button>
