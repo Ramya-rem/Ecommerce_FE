@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import logo from "../../assets/crave&conquer.logo.png"
-import "./ForgotPassword.css"
+import "./forgotPassword.css"
 import api from '../../utils/api';
 
 const ForgotPassword = () => {
