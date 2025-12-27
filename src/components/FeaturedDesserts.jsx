@@ -1,7 +1,6 @@
-"use client"
 import { useState, useEffect } from "react"
 import ProductCard from "./ProductCard"
-import { fetchAllProducts } from "../utils/productApi"
+import { fetchAllProducts } from "../utils/ProductApi";
 import "../styles/FeaturedDesserts.css"
 
 function FeaturedDesserts({ addToCart, onToggleWishlist, wishlistItems = [], isInWishlist }) {
