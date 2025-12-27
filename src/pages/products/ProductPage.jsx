@@ -328,7 +328,7 @@ const ProductsPage = () => {
                   <div className="product-card" key={product.id}>
                     <div className="product-image-container">
                       <img
-                        src={`http://localhost:7777${product.image}`}
+                        src={`${import.meta.env.VITE_BASE_URL}${product.image}`}
                         alt={product.name}
                         className="product-image"
                       />

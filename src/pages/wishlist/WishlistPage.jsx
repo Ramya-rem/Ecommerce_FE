@@ -239,7 +239,7 @@ const WishlistPage = () => {
               <div className="wishlist-item" key={item.id}>
                 <div className="item-image-container">
                   <img 
-                    src={`http://localhost:7777${item.image}`} 
+                    src={`${import.meta.env.VITE_BASE_URL}${item.image}`} 
                     alt={item.productName} 
                     className="item-image" 
                   />

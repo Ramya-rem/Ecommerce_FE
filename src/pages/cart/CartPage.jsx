@@ -246,7 +246,7 @@ const CartPage = () => {
               {cartItems.map((item) => (
                 <div className="cart-item" key={item.id}>
                   <div className="item-image-container">
-                    <img src={`http://localhost:7777${item.image}`} alt={item.productName} className="item-image" />
+                    <img src={`${import.meta.env.VITE_BASE_URL}${item.image}`} alt={item.productName} className="item-image" />
                     {item.badge && <span className="item-badge">{item.badge}</span>}
                     <button className="remove-btn" onClick={() => removeFromCart(item.id)} title="Remove from cart">
                       <FaTrash />

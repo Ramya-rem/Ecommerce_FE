@@ -154,7 +154,7 @@ const OrdersPage = () => {
                       <div className="order-item" key={idx}>
                         <div className="order-item-image">
                           {item?.productRefId?.image ? (
-                            <img src={`http://localhost:7777${item.productRefId.image}`} alt={item?.productRefId?.productName || "Product"} />
+                            <img src={`${import.meta.env.VITE_BASE_URL}${item.productRefId.image}`} alt={item?.productRefId?.productName || "Product"} />
                           ) : (
                             <div className="image-placeholder" />
                           )}
