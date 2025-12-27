@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./login.css"; // Import Login styles
 import api from "../../utils/api";
@@ -10,7 +10,42 @@ const Login = () => {
   });
 
   const [error, setError] = useState(""); // For showing errors
+  const [checkingToken, setCheckingToken] = useState(true);
   const navigate = useNavigate();
+
+  // Check token status on mount - if valid, redirect to home; if invalid/blacklisted, clear it
+  useEffect(() => {
+    const checkTokenStatus = async () => {
+      const token = localStorage.getItem("authToken");
+      
+      if (!token) {
+        setCheckingToken(false);
+        return;
+      }
+
+      try {
+        // Check if token is valid and not blacklisted
+        const response = await api.get("/check-token");
+        
+        if (response.data?.valid) {
+          // Token is valid, redirect to home
+          navigate("/home");
+        } else {
+          // Token is invalid or blacklisted, clear it
+          localStorage.removeItem("authToken");
+          localStorage.removeItem("profilePicture");
+          setCheckingToken(false);
+        }
+      } catch (error) {
+        // Token is invalid or blacklisted, clear it
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("profilePicture");
+        setCheckingToken(false);
+      }
+    };
+
+    checkTokenStatus();
+  }, [navigate]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -36,6 +71,14 @@ const Login = () => {
     }
   };
   
+
+  if (checkingToken) {
+    return (
+      <div className="login-container">
+        <p>Checking authentication...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="login-container">
