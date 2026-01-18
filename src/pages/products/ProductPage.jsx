@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   FaHeart,
   FaShoppingCart,
@@ -13,6 +14,7 @@ import api from "../../utils/api";
 import { fetchAllProducts } from "../../utils/ProductApi";
 
 const ProductsPage = () => {
+  const [searchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
   const [cartItems, setCartItems] = useState([]);
   const [wishlistItems, setWishlistItems] = useState([]);
@@ -36,6 +38,14 @@ const ProductsPage = () => {
     };
     return categoryMap[frontendCategory];
   };
+
+  // ✅ Read category from URL query parameter
+  useEffect(() => {
+    const categoryParam = searchParams.get("category");
+    if (categoryParam) {
+      setSelectedCategory(categoryParam);
+    }
+  }, [searchParams]);
 
   // ✅ Fetch Products from Backend with Category Filter
   useEffect(() => {
